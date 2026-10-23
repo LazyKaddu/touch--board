@@ -1,0 +1,20 @@
+[project]
+name = "touch-board-script"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Aashish Negi", email = "aashishnegi0000@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "pyautogui>=0.9.54",
+    "pyserial>=3.5",
+]
+
+[project.scripts]
+touch-board-script = "touch_board_script:main"
+
+[build-system]
+requires = ["uv_build>=0.13.5,<0.14.0"]
+build-backend = "uv_build"

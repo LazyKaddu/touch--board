@@ -1,0 +1,46 @@
+{
+    "serial_port": "COM3",
+    "baud_rate": 9600,
+    "triggers": {
+        "100000": {
+            "name": "Dev Websites",
+            "type": "open_url",
+            "payload": {
+                "urls": [
+                    "https://github.com",
+                    "https://stackoverflow.com"
+                ]
+            }
+        },
+        "010000": {
+            "name": "Open Calculator",
+            "type": "launch_app",
+            "payload": {
+                "command": "calc.exe"
+            }
+        },
+        "001000": {
+            "name": "Insert Text",
+            "type": "type_text",
+            "payload": {
+                "text": "MySecretPassword123!",
+                "press_enter": true
+            }
+        },
+        "000100": {
+            "name": "Run Vite Dev",
+            "type": "run_command",
+            "payload": {
+                "working_dir": "C:\\projects\\my-vite-app",
+                "command": "npm run dev"
+            }
+        },
+        "110000": {
+            "name": "Secret Combo: Open Spotify",
+            "type": "launch_app",
+            "payload": {
+                "command": "spotify.exe"
+            }
+        }
+    }
+}
