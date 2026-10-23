@@ -8,6 +8,7 @@ authors = [
 ]
 requires-python = ">=3.12"
 dependencies = [
+    "pyautogui>=0.9.54",
     "pyserial>=3.5",
 ]
 
