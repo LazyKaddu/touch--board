@@ -1,0 +1,83 @@
+# ============================================
+# Python
+# ============================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+*.egg
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Python tooling & test caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.tox/
+
+# ============================================
+# Node / Frontend (for config-app)
+# ============================================
+node_modules/
+.npm
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build outputs
+.next/
+out/
+.nuxt/
+.svelte-kit/
+
+# ============================================
+# Embedded / Hardware (PlatformIO, Arduino, etc.)
+# ============================================
+.pio/
+.pioenvs/
+.piolibdeps/
+
+# ============================================
+# Environment variables & secrets
+# ============================================
+.env
+.env*.local
+!.env.example
+
+# ============================================
+# Operating System & Editors
+# ============================================
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDEs
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+*.sublime-project
+*.sublime-workspace
+
+# ============================================
+# Logs & Temporary Files
+# ============================================
+*.log
+*.tmp
+*.bak
