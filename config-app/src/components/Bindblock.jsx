@@ -287,10 +287,8 @@ export const Bindblock = ({
     };
 
     return (
-        <motion.div
+        <div
             ref={cardRef}
-            layout
-            transition={{ type: "spring", stiffness: 350, damping: 28 }}
             style={style}
             draggable={!isExpanded && isShiftDown}
             onDragStart={handleDragStart}
@@ -305,7 +303,7 @@ export const Bindblock = ({
                     onToggleExpand?.(combo);
                 }
             }}
-            className={`rounded-2xl border transition-colors duration-200 select-none overflow-hidden ${isDragging ? "opacity-30 scale-95 border-dashed border-black" : ""
+            className={`card-geometry-transition transform-gpu rounded-2xl border select-none overflow-hidden ${isDragging ? "opacity-30 scale-95 border-dashed border-black" : ""
                 } ${isDragOver
                     ? "border-black ring-2 ring-black scale-[1.03] bg-neutral-50 shadow-md z-10"
                     : ""
@@ -319,15 +317,15 @@ export const Bindblock = ({
         >
             {/* Visual touch pin dots (a0 - a5) - only rendered in collapsed state */}
             {!isExpanded && (
-                <div className="absolute top-3 left-3 flex items-center gap-1.5 drop-shadow-sm pointer-events-none">
-                    <span className="font-mono text-xs text-neutral-500 font-medium tracking-wide drop-shadow-sm">
+                <div className="absolute top-3 left-3 flex items-center gap-1.5 pointer-events-none">
+                    <span className="font-mono text-xs text-neutral-500 font-medium tracking-wide">
                         {combo}
                     </span>
                     <div className="flex gap-1 items-center">
                         {combo.split("").map((bit, bitIdx) => (
                             <span
                                 key={bitIdx}
-                                className={`w-1.5 h-1.5 rounded-full shadow-sm ${bit === "1" ? "bg-black" : "bg-neutral-300"
+                                className={`w-1.5 h-1.5 rounded-full shadow-xs ${bit === "1" ? "bg-black" : "bg-neutral-300"
                                     }`}
                             />
                         ))}
@@ -335,22 +333,22 @@ export const Bindblock = ({
                 </div>
             )}
 
-            <AnimatePresence mode="wait">
+            <AnimatePresence initial={false}>
                 {!isExpanded ? (
                     /* COLLAPSED STATE: Only show the centered icon */
                     <motion.div
                         key="collapsed"
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.9 }}
-                        transition={{ duration: 0.18 }}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.15, ease: "easeOut" }}
                         className="flex flex-col items-center justify-center p-6 w-full h-full pointer-events-none"
                     >
                         {bindData ? (
                             /* Configured: icon and trigger name */
                             <div className="flex flex-col items-center justify-center gap-2 text-center group-hover:scale-105 transition-transform duration-200 px-2 mt-2">
                                 {renderIconImage(bindData.icon || bindData.type, "w-8 h-8")}
-                                <span className="text-xs font-semibold text-gray-600 tracking-tight line-clamp-1 max-w-[130px] drop-shadow-sm">
+                                <span className="text-xs font-semibold text-gray-600 tracking-tight line-clamp-1 max-w-[130px]">
                                     {bindData.name || `Macro ${combo}`}
                                 </span>
                             </div>
@@ -365,10 +363,10 @@ export const Bindblock = ({
                     /* EXPANDED STATE: Streamlined, non-clipping configuration panel */
                     <motion.div
                         key="expanded"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.22, ease: "easeOut" }}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.18, ease: "easeOut" }}
                         className="p-5 sm:p-6 flex flex-col justify-between h-full w-full bg-white"
                         onClick={(e) => e.stopPropagation()}
                     >
@@ -614,8 +612,8 @@ export const Bindblock = ({
                     </motion.div>
                 )}
             </AnimatePresence>
-    </motion.div>
-);
+        </div>
+    );
 };
 
 export default Bindblock;

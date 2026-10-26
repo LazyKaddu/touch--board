@@ -360,51 +360,57 @@ export default function ProfileBar({
                       </button>
 
                       {/* 3-dots Profile Dropdown Menu */}
-                      {isMenuOpen && (
-                        <div
-                          ref={menuRef}
-                          className="absolute top-full left-0 mt-1.5 z-50 w-44 bg-white border border-neutral-200 rounded-lg shadow-xl py-1 text-black select-none animate-in fade-in zoom-in-95 duration-100"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <div className="px-3 py-1 text-[11px] font-semibold text-neutral-400 uppercase tracking-wider border-b border-neutral-100">
-                            {p.name}
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={() => handleStartRename(p.id, p.name)}
-                            className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-neutral-700 hover:bg-neutral-100 hover:text-black cursor-pointer text-left"
+                      <AnimatePresence>
+                        {isMenuOpen && (
+                          <motion.div
+                            ref={menuRef}
+                            initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                            transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
+                            className="absolute top-full left-0 mt-1.5 z-50 w-44 bg-white border border-neutral-200 rounded-lg shadow-xl py-1 text-black select-none transform-gpu origin-top-left"
+                            onClick={(e) => e.stopPropagation()}
                           >
-                            <Pencil className="w-3.5 h-3.5 text-neutral-500" />
-                            <span>Rename</span>
-                          </button>
+                            <div className="px-3 py-1 text-[11px] font-semibold text-neutral-400 uppercase tracking-wider border-b border-neutral-100">
+                              {p.name}
+                            </div>
 
-                          <button
-                            type="button"
-                            onClick={() => {
-                              onDuplicateProfile(p.id);
-                              setMenuProfileId(null);
-                            }}
-                            className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-neutral-700 hover:bg-neutral-100 hover:text-black cursor-pointer text-left"
-                          >
-                            <Copy className="w-3.5 h-3.5 text-neutral-500" />
-                            <span>Duplicate</span>
-                          </button>
+                            <button
+                              type="button"
+                              onClick={() => handleStartRename(p.id, p.name)}
+                              className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-neutral-700 hover:bg-neutral-100 hover:text-black cursor-pointer text-left"
+                            >
+                              <Pencil className="w-3.5 h-3.5 text-neutral-500" />
+                              <span>Rename</span>
+                            </button>
 
-                          {/* Delete option - ALWAYS available when clicking 3 button */}
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setDeleteConfirmId(p.id);
-                              setMenuProfileId(null);
-                            }}
-                            className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 hover:text-red-700 cursor-pointer text-left border-t border-neutral-100 mt-1 pt-1.5 font-medium"
-                          >
-                            <Trash2 className="w-3.5 h-3.5 text-red-500" />
-                            <span>Delete Profile</span>
-                          </button>
-                        </div>
-                      )}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                onDuplicateProfile(p.id);
+                                setMenuProfileId(null);
+                              }}
+                              className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-neutral-700 hover:bg-neutral-100 hover:text-black cursor-pointer text-left"
+                            >
+                              <Copy className="w-3.5 h-3.5 text-neutral-500" />
+                              <span>Duplicate</span>
+                            </button>
+
+                            {/* Delete option - ALWAYS available when clicking 3 button */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setDeleteConfirmId(p.id);
+                                setMenuProfileId(null);
+                              }}
+                              className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 hover:text-red-700 cursor-pointer text-left border-t border-neutral-100 mt-1 pt-1.5 font-medium"
+                            >
+                              <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                              <span>Delete Profile</span>
+                            </button>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
                   )}
                 </div>
@@ -440,131 +446,139 @@ export default function ProfileBar({
             </button>
 
             {/* Side Hamburger Dropdown */}
-            {isSideMenuOpen && (
-              <div className="absolute right-0 top-full mt-1.5 z-50 w-56 bg-white border border-neutral-200 rounded-xl shadow-xl py-1.5 text-black select-none animate-in fade-in zoom-in-95 duration-100">
-                <div className="px-3 py-1.5 text-[11px] font-semibold text-neutral-400 uppercase tracking-wider border-b border-neutral-100">
-                  Profile: {activeProfile?.name}
-                </div>
-
-                {/* Delete active profile option */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setDeleteConfirmId(activeProfileId);
-                    setIsSideMenuOpen(false);
-                  }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-red-600 hover:bg-red-50 hover:text-red-700 cursor-pointer text-left font-medium"
+            <AnimatePresence>
+              {isSideMenuOpen && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                  transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
+                  className="absolute right-0 top-full mt-1.5 z-50 w-56 bg-white border border-neutral-200 rounded-xl shadow-xl py-1.5 text-black select-none transform-gpu origin-top-right"
                 >
-                  <Trash2 className="w-3.5 h-3.5 text-red-500" />
-                  <span>Delete "{activeProfile?.name}"</span>
-                </button>
+                  <div className="px-3 py-1.5 text-[11px] font-semibold text-neutral-400 uppercase tracking-wider border-b border-neutral-100">
+                    Profile: {activeProfile?.name}
+                  </div>
 
-                <div className="border-t border-neutral-100 my-1" />
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsCreateOpen(true);
-                    setIsSideMenuOpen(false);
-                  }}
-                  className="w-full flex items-center gap-2.5 px-3 py-1.5 text-xs text-neutral-700 hover:bg-neutral-100 hover:text-black cursor-pointer text-left"
-                >
-                  <Plus className="w-3.5 h-3.5 text-neutral-500" />
-                  <span>Create New Profile</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    handleStartRename(activeProfileId, activeProfile?.name);
-                    setIsSideMenuOpen(false);
-                  }}
-                  className="w-full flex items-center gap-2.5 px-3 py-1.5 text-xs text-neutral-700 hover:bg-neutral-100 hover:text-black cursor-pointer text-left"
-                >
-                  <Pencil className="w-3.5 h-3.5 text-neutral-500" />
-                  <span>Rename Active Profile</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    onDuplicateProfile(activeProfileId);
-                    setIsSideMenuOpen(false);
-                  }}
-                  className="w-full flex items-center gap-2.5 px-3 py-1.5 text-xs text-neutral-700 hover:bg-neutral-100 hover:text-black cursor-pointer text-left"
-                >
-                  <Copy className="w-3.5 h-3.5 text-neutral-500" />
-                  <span>Duplicate Active Profile</span>
-                </button>
-
-                {onClearTriggers && (
+                  {/* Delete active profile option */}
                   <button
                     type="button"
                     onClick={() => {
-                      if (
-                        window.confirm(
-                          `Clear all configured triggers from "${activeProfile?.name}"?`
-                        )
-                      ) {
-                        onClearTriggers();
-                        setIsSideMenuOpen(false);
-                      }
+                      setDeleteConfirmId(activeProfileId);
+                      setIsSideMenuOpen(false);
                     }}
-                    className="w-full flex items-center gap-2.5 px-3 py-1.5 text-xs text-neutral-600 hover:bg-neutral-100 hover:text-black cursor-pointer text-left border-t border-neutral-100 mt-1 pt-1.5"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-red-600 hover:bg-red-50 hover:text-red-700 cursor-pointer text-left font-medium"
                   >
-                    <Eraser className="w-3.5 h-3.5 text-neutral-500" />
-                    <span>Clear Profile Triggers</span>
+                    <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                    <span>Delete "{activeProfile?.name}"</span>
                   </button>
-                )}
 
-                {/* Background Service Scripts Section */}
-                <div className="border-t border-neutral-100 my-1.5" />
+                  <div className="border-t border-neutral-100 my-1" />
 
-                <div className="flex items-center justify-between px-3 py-1">
-                  <span className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">
-                    Service Controls
-                  </span>
-                  {serviceStatus && (
-                    <span
-                      className={`text-[9px] px-1.5 py-0.5 rounded font-mono font-medium ${
-                        serviceStatus === "active"
-                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                          : "bg-neutral-100 text-neutral-600 border border-neutral-200"
-                      }`}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsCreateOpen(true);
+                      setIsSideMenuOpen(false);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-1.5 text-xs text-neutral-700 hover:bg-neutral-100 hover:text-black cursor-pointer text-left"
+                  >
+                    <Plus className="w-3.5 h-3.5 text-neutral-500" />
+                    <span>Create New Profile</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleStartRename(activeProfileId, activeProfile?.name);
+                      setIsSideMenuOpen(false);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-1.5 text-xs text-neutral-700 hover:bg-neutral-100 hover:text-black cursor-pointer text-left"
+                  >
+                    <Pencil className="w-3.5 h-3.5 text-neutral-500" />
+                    <span>Rename Active Profile</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onDuplicateProfile(activeProfileId);
+                      setIsSideMenuOpen(false);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-1.5 text-xs text-neutral-700 hover:bg-neutral-100 hover:text-black cursor-pointer text-left"
+                  >
+                    <Copy className="w-3.5 h-3.5 text-neutral-500" />
+                    <span>Duplicate Active Profile</span>
+                  </button>
+
+                  {onClearTriggers && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (
+                          window.confirm(
+                            `Clear all configured triggers from "${activeProfile?.name}"?`
+                          )
+                        ) {
+                          onClearTriggers();
+                          setIsSideMenuOpen(false);
+                        }
+                      }}
+                      className="w-full flex items-center gap-2.5 px-3 py-1.5 text-xs text-neutral-600 hover:bg-neutral-100 hover:text-black cursor-pointer text-left border-t border-neutral-100 mt-1 pt-1.5"
                     >
-                      {serviceStatus}
-                    </span>
+                      <Eraser className="w-3.5 h-3.5 text-neutral-500" />
+                      <span>Clear Profile Triggers</span>
+                    </button>
                   )}
-                </div>
 
-                {/* 1. Install Script Option */}
-                <button
-                  type="button"
-                  id="menu-install-service-btn"
-                  onClick={handleTriggerInstall}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-neutral-800 hover:bg-emerald-50 hover:text-emerald-700 cursor-pointer text-left transition-colors font-medium group"
-                  title="Run install script to configure TouchBoard background auto-run service"
-                >
-                  <Play className="w-3.5 h-3.5 text-emerald-600 group-hover:scale-110 transition-transform" />
-                  <span>Install Service</span>
-                </button>
+                  {/* Background Service Scripts Section */}
+                  <div className="border-t border-neutral-100 my-1.5" />
 
-                {/* 2. Uninstall Script Option */}
-                <button
-                  type="button"
-                  id="menu-uninstall-service-btn"
-                  onClick={() => {
-                    setIsUninstallConfirmOpen(true);
-                    setIsSideMenuOpen(false);
-                  }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-neutral-800 hover:bg-red-50 hover:text-red-700 cursor-pointer text-left transition-colors font-medium group"
-                  title="Run uninstall script to remove background service and auto-run"
-                >
-                  <Trash className="w-3.5 h-3.5 text-red-500 group-hover:scale-110 transition-transform" />
-                  <span>Uninstall Service</span>
-                </button>
-              </div>
-            )}
+                  <div className="flex items-center justify-between px-3 py-1">
+                    <span className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">
+                      Service Controls
+                    </span>
+                    {serviceStatus && (
+                      <span
+                        className={`text-[9px] px-1.5 py-0.5 rounded font-mono font-medium ${
+                          serviceStatus === "active"
+                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                            : "bg-neutral-100 text-neutral-600 border border-neutral-200"
+                        }`}
+                      >
+                        {serviceStatus}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* 1. Install Script Option */}
+                  <button
+                    type="button"
+                    id="menu-install-service-btn"
+                    onClick={handleTriggerInstall}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-neutral-800 hover:bg-emerald-50 hover:text-emerald-700 cursor-pointer text-left transition-colors font-medium group"
+                    title="Run install script to configure TouchBoard background auto-run service"
+                  >
+                    <Play className="w-3.5 h-3.5 text-emerald-600 group-hover:scale-110 transition-transform" />
+                    <span>Install Service</span>
+                  </button>
+
+                  {/* 2. Uninstall Script Option */}
+                  <button
+                    type="button"
+                    id="menu-uninstall-service-btn"
+                    onClick={() => {
+                      setIsUninstallConfirmOpen(true);
+                      setIsSideMenuOpen(false);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-neutral-800 hover:bg-red-50 hover:text-red-700 cursor-pointer text-left transition-colors font-medium group"
+                    title="Run uninstall script to remove background service and auto-run"
+                  >
+                    <Trash className="w-3.5 h-3.5 text-red-500 group-hover:scale-110 transition-transform" />
+                    <span>Uninstall Service</span>
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       </div>
@@ -572,15 +586,20 @@ export default function ProfileBar({
       {/* Delete Confirmation Modal */}
       <AnimatePresence>
         {deleteConfirmId && (
-          <div
-            className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4"
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18, ease: "easeOut" }}
+            className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
             onClick={() => setDeleteConfirmId(null)}
           >
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-xl shadow-2xl border border-neutral-200 w-full max-w-sm p-5 text-black"
+              initial={{ opacity: 0, scale: 0.95, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 8 }}
+              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+              className="bg-white rounded-xl shadow-2xl border border-neutral-200 w-full max-w-sm p-5 text-black transform-gpu"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-start gap-3">
@@ -620,22 +639,27 @@ export default function ProfileBar({
                 </Button>
               </div>
             </motion.div>
-          </div>
+          </motion.div>
         )}
       </AnimatePresence>
 
       {/* Create New Profile Modal */}
       <AnimatePresence>
         {isCreateOpen && (
-          <div
-            className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4"
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18, ease: "easeOut" }}
+            className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
             onClick={() => setIsCreateOpen(false)}
           >
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              initial={{ opacity: 0, scale: 0.95, y: 8 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="bg-white rounded-xl shadow-2xl border border-neutral-200 w-full max-w-md p-6 text-black"
+              exit={{ opacity: 0, scale: 0.95, y: 8 }}
+              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+              className="bg-white rounded-xl shadow-2xl border border-neutral-200 w-full max-w-md p-6 text-black transform-gpu"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
@@ -809,22 +833,27 @@ export default function ProfileBar({
                 </div>
               </form>
             </motion.div>
-          </div>
+          </motion.div>
         )}
       </AnimatePresence>
 
       {/* Uninstall Confirmation Modal */}
       <AnimatePresence>
         {isUninstallConfirmOpen && (
-          <div
-            className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4"
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18, ease: "easeOut" }}
+            className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
             onClick={() => setIsUninstallConfirmOpen(false)}
           >
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-xl shadow-2xl border border-neutral-200 w-full max-w-sm p-5 text-black"
+              initial={{ opacity: 0, scale: 0.95, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 8 }}
+              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+              className="bg-white rounded-xl shadow-2xl border border-neutral-200 w-full max-w-sm p-5 text-black transform-gpu"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-start gap-3">
@@ -868,15 +897,19 @@ export default function ProfileBar({
                 </Button>
               </div>
             </motion.div>
-          </div>
+          </motion.div>
         )}
       </AnimatePresence>
 
       {/* Service Action Result / Progress Modal */}
       <AnimatePresence>
         {serviceModal.isOpen && (
-          <div
-            className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4"
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18, ease: "easeOut" }}
+            className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
             onClick={() => {
               if (serviceModal.status !== "loading") {
                 setServiceModal((prev) => ({ ...prev, isOpen: false }));
@@ -884,10 +917,11 @@ export default function ProfileBar({
             }}
           >
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-xl shadow-2xl border border-neutral-200 w-full max-w-sm p-5 text-black"
+              initial={{ opacity: 0, scale: 0.95, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 8 }}
+              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+              className="bg-white rounded-xl shadow-2xl border border-neutral-200 w-full max-w-sm p-5 text-black transform-gpu"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-start gap-3">
@@ -938,7 +972,7 @@ export default function ProfileBar({
                 </div>
               )}
             </motion.div>
-          </div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

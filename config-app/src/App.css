@@ -28,3 +28,15 @@ body {
   background-color: #aaaaaa;
   color: #000000;
 }
+
+/* Hardware-accelerated GPU transitions for WebKitGTK & Chromium */
+.card-geometry-transition {
+  transition: top 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+              left 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+              width 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+              height 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.2s ease,
+              border-color 0.2s ease,
+              background-color 0.2s ease;
+  will-change: top, left, width, height;
+}

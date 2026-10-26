@@ -626,8 +626,12 @@ function App() {
 
         {/* 63-Slot Combinations Container: Constant 4 in row (squished) + column-wise push */}
         <div
-          className="relative w-full transition-all duration-300"
-          style={{ height: `${layoutData.totalHeight}px` }}
+          className="relative w-full"
+          style={{
+            height: `${layoutData.totalHeight}px`,
+            transition: "height 0.28s cubic-bezier(0.16, 1, 0.3, 1)",
+            willChange: "height",
+          }}
           onClick={(e) => e.stopPropagation()}
         >
           {layoutData.items.map((item, index) => {
