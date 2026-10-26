@@ -16,9 +16,12 @@ class TestBinarySerialHandling(unittest.TestCase):
         self.assertEqual(main.parse_binary_packet("010000\n"), "010000")
         self.assertEqual(main.parse_binary_packet("000000"), "000000")
         self.assertEqual(main.parse_binary_packet("1 0 0 0 0 0\r\n"), "100000")
+        self.assertEqual(main.parse_binary_packet("0\t0\t0\t0\t0\t0\r\n"), "000000")
+        self.assertEqual(main.parse_binary_packet("1\t0\t0\t0\t0\t0\r\n"), "100000")
         self.assertEqual(main.parse_binary_packet("110000"), "110000")
 
         # Invalid cases
+        self.assertIsNone(main.parse_binary_packet("a0\ta1\ta2\ta3\ta4\ta5\r\n"))  # header
         self.assertIsNone(main.parse_binary_packet("10000"))  # length 5
         self.assertIsNone(main.parse_binary_packet("1000000"))  # length 7
         self.assertIsNone(main.parse_binary_packet("100002"))  # invalid char
@@ -113,7 +116,12 @@ class TestBinarySerialHandling(unittest.TestCase):
                 if packet:
                     last_key = main.handle_binary_state(packet, triggers, last_key)
 
-            expected_actions = ["open_url", "launch_app", "run_command", "launch_app"]
+            expected_actions = [
+                triggers["100000"]["type"],
+                triggers["010000"]["type"],
+                triggers["000100"]["type"],
+                triggers["110000"]["type"],
+            ]
             self.assertEqual(recorded_actions, expected_actions)
 
 
