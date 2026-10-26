@@ -88,7 +88,9 @@ class TestBinarySerialHandling(unittest.TestCase):
 
     def test_simulated_serial_stream_with_config(self):
         config = main.load_config()
-        triggers = config["triggers"]
+        triggers, _ = main.get_active_triggers(config)
+        if not all(k in triggers for k in ["100000", "010000", "000100", "110000"]):
+            triggers = config.get("profiles", {}).get("coding", {}).get("triggers", config.get("triggers", {}))
         recorded_actions = []
 
         def spy_action(name):

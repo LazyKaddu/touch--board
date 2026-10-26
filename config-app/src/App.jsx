@@ -12,7 +12,9 @@ import {
   persistConfig,
   downloadConfigFile,
   fetchRemoteConfig,
+  setupTouchboardService,
 } from "./services/configService";
+
 
 // Generate all 63 active combinations from 000001 to 111111 (excluding 000000)
 const ALL_COMBOS = Array.from({ length: 63 }, (_, i) =>
@@ -99,6 +101,20 @@ function App() {
       mounted = false;
     };
   }, []);
+
+  // Background automation service setup (runs once on first launch)
+  useEffect(() => {
+    setupTouchboardService()
+      .then((res) => {
+        if (res?.is_first_run) {
+          console.log("[TouchBoard] Initial background service setup completed:", res);
+        }
+      })
+      .catch((err) => {
+        console.warn("[TouchBoard] Background service setup check failed:", err);
+      });
+  }, []);
+
 
   // Update a single trigger combo within the active profile
   const handleSave = (combo, updatedData) => {

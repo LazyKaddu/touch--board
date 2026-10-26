@@ -7,8 +7,30 @@ import webbrowser
 # import pyautogui
 import serial
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-CONFIG_FILE = os.path.join(BASE_DIR, "config.json")
+def resolve_config_path() -> str:
+    """Finds the active config.json path.
+    1. Checks environment variable TOUCHBOARD_CONFIG if set.
+    2. Checks local script directory.
+    3. Checks ~/.config/touchboard/config.json.
+    """
+    env_config = os.environ.get("TOUCHBOARD_CONFIG")
+    if env_config and os.path.exists(env_config):
+        return env_config
+
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    local_config = os.path.join(script_dir, "config.json")
+    if os.path.exists(local_config):
+        return local_config
+
+    user_config = os.path.expanduser("~/.config/touchboard/config.json")
+    if os.path.exists(user_config):
+        return user_config
+
+    return local_config
+
+CONFIG_FILE = resolve_config_path()
+
+
 
 # --- 1. Modular Helper Functions ---
 

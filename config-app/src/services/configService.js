@@ -227,3 +227,69 @@ export function downloadConfigFile(profiles, activeProfileId, serialPort = "/dev
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
+
+/**
+ * Invokes setup_touchboard_service in Tauri backend to install background service on first launch.
+ */
+export async function setupTouchboardService() {
+  if (typeof window !== "undefined" && (window.__TAURI_INTERNALS__ || window.__TAURI__)) {
+    try {
+      const { invoke } = await import("@tauri-apps/api/core");
+      const res = await invoke("setup_touchboard_service");
+      return typeof res === "string" ? JSON.parse(res) : res;
+    } catch (err) {
+      console.warn("setup_touchboard_service failed:", err);
+      return { installed: false, error: String(err) };
+    }
+  }
+  return { installed: false, skipped: true, reason: "not_tauri" };
+}
+
+/**
+ * Retrieves the current status of the touchboard background systemd service.
+ */
+export async function getServiceStatus() {
+  if (typeof window !== "undefined" && (window.__TAURI_INTERNALS__ || window.__TAURI__)) {
+    try {
+      const { invoke } = await import("@tauri-apps/api/core");
+      return await invoke("get_service_status");
+    } catch (err) {
+      console.warn("get_service_status failed:", err);
+      return "unknown";
+    }
+  }
+  return "web";
+}
+
+/**
+ * Restarts the touchboard background service.
+ */
+export async function restartService() {
+  if (typeof window !== "undefined" && (window.__TAURI_INTERNALS__ || window.__TAURI__)) {
+    try {
+      const { invoke } = await import("@tauri-apps/api/core");
+      return await invoke("restart_service");
+    } catch (err) {
+      console.warn("restart_service failed:", err);
+      return "failed";
+    }
+  }
+  return "web";
+}
+
+/**
+ * Stops the touchboard background service.
+ */
+export async function stopService() {
+  if (typeof window !== "undefined" && (window.__TAURI_INTERNALS__ || window.__TAURI__)) {
+    try {
+      const { invoke } = await import("@tauri-apps/api/core");
+      return await invoke("stop_service");
+    } catch (err) {
+      console.warn("stop_service failed:", err);
+      return "failed";
+    }
+  }
+  return "web";
+}
+
