@@ -4,7 +4,7 @@ import subprocess
 import sys
 import time
 import webbrowser
-import pyautogui
+# import pyautogui
 import serial
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -24,15 +24,15 @@ def action_launch_app(payload):
     if cmd:
         subprocess.Popen(cmd, shell=True)
 
-def action_type_text(payload):
-    if pyautogui is None:
-        print("Warning: pyautogui is not installed. Run 'uv pip install pyautogui' to enable type_text.")
-        return
-    text = payload.get("text", "")
-    interval = payload.get("interval", 0.02)
-    pyautogui.write(text, interval=interval)
-    if payload.get("press_enter", False):
-        pyautogui.press("enter")
+# def action_type_text(payload):
+#     if pyautogui is None:
+#         print("Warning: pyautogui is not installed. Run 'uv pip install pyautogui' to enable type_text.")
+#         return
+#     text = payload.get("text", "")
+#     interval = payload.get("interval", 0.02)
+#     pyautogui.write(text, interval=interval)
+#     if payload.get("press_enter", False):
+#         pyautogui.press("enter")
 
 def action_run_command(payload):
     cmd = payload.get("command", "")
@@ -54,7 +54,7 @@ def action_run_command(payload):
 ACTION_HANDLERS = {
     "open_url": action_open_url,
     "launch_app": action_launch_app,
-    "type_text": action_type_text,
+    # "type_text": action_type_text,
     "run_command": action_run_command,
 }
 
@@ -70,9 +70,10 @@ def load_config():
 
 def parse_binary_packet(raw_line: str) -> str | None:
     """Cleans and validates a 6-character binary encoded string ('0' and '1').
+    Handles space, tab, and newline separated binary streams.
     Returns the 6-character string if valid, otherwise None.
     """
-    clean = raw_line.strip().replace(" ", "")
+    clean = "".join(raw_line.split())
     if len(clean) == 6 and all(c in ("0", "1") for c in clean):
         return clean
     return None
@@ -96,32 +97,59 @@ def handle_binary_state(binary_str: str, triggers: dict, last_active_key: str | 
 
     return last_active_key
 
+def get_active_triggers(config: dict) -> tuple[dict, str]:
+    """Retrieves triggers for the active profile, falling back to top-level triggers."""
+    profiles = config.get("profiles", {})
+    active_profile_key = config.get("active_profile")
+    if profiles and active_profile_key:
+        if active_profile_key in profiles:
+            p = profiles[active_profile_key]
+            return p.get("triggers", {}), p.get("name", active_profile_key)
+        for key, p in profiles.items():
+            if p.get("name") == active_profile_key:
+                return p.get("triggers", {}), p.get("name", key)
+    return config.get("triggers", {}), active_profile_key or "Default"
+
 # --- 4. Serial Execution Loop ---
 
 def main():
     config = load_config()
-    port = config.get("serial_port", "COM3")
+    port = config.get("serial_port", "/dev/ttyUSB0")
     baud = config.get("baud_rate", 9600)
-    triggers = config.get("triggers", {})
+    triggers, profile_name = get_active_triggers(config)
 
     try:
         ser = serial.Serial(port, baud, timeout=1)
         print(f"Engine running. Connected to {port}...")
+        print(f"Active Profile: '{profile_name}' ({len(triggers)} triggers configured)")
         time.sleep(2)
     except Exception as e:
         print(f"Error opening serial port: {e}")
         return
 
     last_active_key = None
+    last_mtime = os.path.getmtime(CONFIG_FILE) if os.path.exists(CONFIG_FILE) else 0
 
     try:
+        print("Waiting for touch input... (Press Ctrl+C to stop)")
         while True:
-            if ser.in_waiting > 0:
-                raw_line = ser.readline().decode("utf-8", errors="ignore")
-                binary_str = parse_binary_packet(raw_line)
-                if binary_str:
-                    last_active_key = handle_binary_state(binary_str, triggers, last_active_key)
+            # Check for live config file modifications (e.g. profile switched in UI)
+            try:
+                current_mtime = os.path.getmtime(CONFIG_FILE)
+                if current_mtime > last_mtime:
+                    last_mtime = current_mtime
+                    new_config = load_config()
+                    triggers, profile_name = get_active_triggers(new_config)
+                    print(f"\n[TouchBoard] Profile updated! Active: '{profile_name}' ({len(triggers)} triggers)")
+            except Exception:
+                pass
 
+            raw_line = ser.readline().decode("utf-8", errors="ignore")
+            if not raw_line:
+                continue
+            binary_str = parse_binary_packet(raw_line)
+            if binary_str:
+                last_active_key = handle_binary_state(binary_str, triggers, last_active_key)
     except KeyboardInterrupt:
         print("\nStopping...")
     finally:
