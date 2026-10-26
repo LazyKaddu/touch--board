@@ -49,6 +49,11 @@ fn pick_file() -> String {
     String::new()
 }
 
+// Embedded script assets compiled directly into the binary
+const SCRIPT_MAIN_PY: &str = include_str!("../scripts/main.py");
+const SCRIPT_INSTALL_SH: &str = include_str!("../scripts/install_service.sh");
+const DEFAULT_CONFIG_JSON: &str = include_str!("../scripts/config.json");
+
 fn get_home_dir() -> Option<std::path::PathBuf> {
     std::env::var("HOME").ok().map(std::path::PathBuf::from)
 }
@@ -65,6 +70,7 @@ fn find_config_path() -> std::path::PathBuf {
         "../touch-board-script/src/config.json",
         "touch-board-script/src/config.json",
         "../../touch-board-script/src/config.json",
+        "scripts/config.json",
     ];
     for rel in candidates {
         let p = std::path::PathBuf::from(rel);
@@ -72,13 +78,23 @@ fn find_config_path() -> std::path::PathBuf {
             return p;
         }
     }
-    std::path::PathBuf::from("../touch-board-script/src/config.json")
+
+    if let Some(home) = get_home_dir() {
+        return home.join(".config").join("touchboard").join("config.json");
+    }
+
+    std::path::PathBuf::from("config.json")
 }
 
 #[tauri::command]
 fn load_config() -> Result<String, String> {
     let p = find_config_path();
-    std::fs::read_to_string(&p).map_err(|e| format!("Failed to read {}: {}", p.display(), e))
+    if p.exists() {
+        std::fs::read_to_string(&p).map_err(|e| format!("Failed to read {}: {}", p.display(), e))
+    } else {
+        // Return embedded default config if none exists yet
+        Ok(DEFAULT_CONFIG_JSON.to_string())
+    }
 }
 
 #[tauri::command]
@@ -104,26 +120,45 @@ fn save_config(config_str: String) -> Result<(), String> {
     Ok(())
 }
 
-fn find_install_script_path() -> Option<std::path::PathBuf> {
-    let candidates = [
-        "../touch-board-script/scripts/install_service.sh",
-        "touch-board-script/scripts/install_service.sh",
-        "../../touch-board-script/scripts/install_service.sh",
-    ];
-    for rel in candidates {
-        let p = std::path::PathBuf::from(rel);
-        if p.exists() {
-            return Some(p);
-        }
-    }
-    None
-}
-
 #[tauri::command]
 fn setup_touchboard_service() -> Result<String, String> {
     let home = get_home_dir().ok_or_else(|| "Could not determine user HOME directory".to_string())?;
-    let marker = home.join(".config").join("touchboard").join(".setup_complete");
+    let config_dir = home.join(".config").join("touchboard");
+    let scripts_dir = config_dir.join("scripts");
+    let marker = config_dir.join(".setup_complete");
 
+    // 1. Ensure permanent directory exists
+    std::fs::create_dir_all(&scripts_dir)
+        .map_err(|e| format!("Failed to create scripts directory: {}", e))?;
+
+    // 2. Extract embedded scripts into permanent config directory
+    let main_py_path = scripts_dir.join("main.py");
+    let install_sh_path = scripts_dir.join("install_service.sh");
+    let config_json_path = config_dir.join("config.json");
+
+    std::fs::write(&main_py_path, SCRIPT_MAIN_PY)
+        .map_err(|e| format!("Failed to write main.py: {}", e))?;
+
+    std::fs::write(&install_sh_path, SCRIPT_INSTALL_SH)
+        .map_err(|e| format!("Failed to write install_service.sh: {}", e))?;
+
+    // Write default config only if none exists yet, preserving any existing user settings
+    if !config_json_path.exists() {
+        let _ = std::fs::write(&config_json_path, DEFAULT_CONFIG_JSON);
+    }
+
+    // Set execute permissions on install_service.sh on Unix systems
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        if let Ok(metadata) = std::fs::metadata(&install_sh_path) {
+            let mut perms = metadata.permissions();
+            perms.set_mode(0o755);
+            let _ = std::fs::set_permissions(&install_sh_path, perms);
+        }
+    }
+
+    // 3. If setup was already completed, return early
     if marker.exists() {
         return Ok(serde_json::json!({
             "installed": true,
@@ -132,11 +167,9 @@ fn setup_touchboard_service() -> Result<String, String> {
         }).to_string());
     }
 
-    let script_path = find_install_script_path()
-        .ok_or_else(|| "Installer script install_service.sh not found.".to_string())?;
-
+    // 4. Run the installer script
     let output = std::process::Command::new("bash")
-        .arg(&script_path)
+        .arg(&install_sh_path)
         .output()
         .map_err(|e| format!("Failed to execute installer: {}", e))?;
 
@@ -152,6 +185,7 @@ fn setup_touchboard_service() -> Result<String, String> {
         Err(format!("Installation failed: {}", err))
     }
 }
+
 
 #[tauri::command]
 fn get_service_status() -> Result<String, String> {
