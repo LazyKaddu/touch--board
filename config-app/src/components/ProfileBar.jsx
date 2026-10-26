@@ -11,15 +11,24 @@ import {
   Pencil,
   Copy,
   Trash2,
+  Trash,
   Check,
   Layers,
   X,
   AlertCircle,
   Eraser,
+  Play,
+  Loader2,
+  CheckCircle2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+  installTouchboardService,
+  uninstallTouchboardService,
+  getServiceStatus,
+} from "@/services/configService";
 
 // Maps icon name to Lucide component
 const PROFILE_ICONS = {
@@ -58,6 +67,27 @@ export default function ProfileBar({
 
   // Delete confirmation modal state
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
+
+  // Background service management state
+  const [serviceStatus, setServiceStatus] = useState(null);
+  const [isUninstallConfirmOpen, setIsUninstallConfirmOpen] = useState(false);
+  const [purgeConfig, setPurgeConfig] = useState(false);
+  const [serviceModal, setServiceModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    status: "idle", // 'idle' | 'loading' | 'success' | 'error'
+    details: "",
+  });
+
+  // Query service status when hamburger menu is toggled open
+  useEffect(() => {
+    if (isSideMenuOpen) {
+      getServiceStatus().then((status) => {
+        if (status) setServiceStatus(status);
+      });
+    }
+  }, [isSideMenuOpen]);
 
   const menuRef = useRef(null);
   const sideMenuRef = useRef(null);
@@ -122,6 +152,93 @@ export default function ProfileBar({
     setNewProfileIcon("sparkles");
     setNewProfileTemplate("clone");
     setIsCreateOpen(false);
+  };
+
+  const handleTriggerInstall = async () => {
+    setIsSideMenuOpen(false);
+    setServiceModal({
+      isOpen: true,
+      title: "Installing Background Service",
+      message: "Executing installer script to configure auto-run...",
+      status: "loading",
+      details: "",
+    });
+
+    try {
+      const res = await installTouchboardService();
+      if (res && res.installed) {
+        setServiceStatus("active");
+        setServiceModal({
+          isOpen: true,
+          title: "Service Installed Successfully",
+          message:
+            res.message ||
+            "TouchBoard background engine installed and started successfully.",
+          status: "success",
+          details: res.output || "",
+        });
+      } else {
+        setServiceModal({
+          isOpen: true,
+          title: "Installation Failed",
+          message: res?.error || "Failed to execute installer script.",
+          status: "error",
+          details: "",
+        });
+      }
+    } catch (err) {
+      setServiceModal({
+        isOpen: true,
+        title: "Installation Error",
+        message: String(err),
+        status: "error",
+        details: "",
+      });
+    }
+  };
+
+  const handleTriggerUninstallConfirm = async () => {
+    setIsUninstallConfirmOpen(false);
+    setServiceModal({
+      isOpen: true,
+      title: "Uninstalling Background Service",
+      message:
+        "Stopping service and removing systemd auto-run configuration...",
+      status: "loading",
+      details: "",
+    });
+
+    try {
+      const res = await uninstallTouchboardService(purgeConfig);
+      if (res && res.uninstalled) {
+        setServiceStatus("not_installed");
+        setServiceModal({
+          isOpen: true,
+          title: "Service Uninstalled",
+          message:
+            res.message ||
+            "TouchBoard background service successfully uninstalled.",
+          status: "success",
+          details: res.output || "",
+        });
+      } else {
+        setServiceModal({
+          isOpen: true,
+          title: "Uninstallation Failed",
+          message: res?.error || "Failed to execute uninstaller script.",
+          status: "error",
+          details: "",
+        });
+      }
+    } catch (err) {
+      setServiceModal({
+        isOpen: true,
+        title: "Uninstallation Error",
+        message: String(err),
+        status: "error",
+        details: "",
+      });
+    }
   };
 
   const profileList = Object.values(profiles);
@@ -399,6 +516,53 @@ export default function ProfileBar({
                     <span>Clear Profile Triggers</span>
                   </button>
                 )}
+
+                {/* Background Service Scripts Section */}
+                <div className="border-t border-neutral-100 my-1.5" />
+
+                <div className="flex items-center justify-between px-3 py-1">
+                  <span className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">
+                    Service Controls
+                  </span>
+                  {serviceStatus && (
+                    <span
+                      className={`text-[9px] px-1.5 py-0.5 rounded font-mono font-medium ${
+                        serviceStatus === "active"
+                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                          : "bg-neutral-100 text-neutral-600 border border-neutral-200"
+                      }`}
+                    >
+                      {serviceStatus}
+                    </span>
+                  )}
+                </div>
+
+                {/* 1. Install Script Option */}
+                <button
+                  type="button"
+                  id="menu-install-service-btn"
+                  onClick={handleTriggerInstall}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-neutral-800 hover:bg-emerald-50 hover:text-emerald-700 cursor-pointer text-left transition-colors font-medium group"
+                  title="Run install script to configure TouchBoard background auto-run service"
+                >
+                  <Play className="w-3.5 h-3.5 text-emerald-600 group-hover:scale-110 transition-transform" />
+                  <span>Install Service</span>
+                </button>
+
+                {/* 2. Uninstall Script Option */}
+                <button
+                  type="button"
+                  id="menu-uninstall-service-btn"
+                  onClick={() => {
+                    setIsUninstallConfirmOpen(true);
+                    setIsSideMenuOpen(false);
+                  }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-neutral-800 hover:bg-red-50 hover:text-red-700 cursor-pointer text-left transition-colors font-medium group"
+                  title="Run uninstall script to remove background service and auto-run"
+                >
+                  <Trash className="w-3.5 h-3.5 text-red-500 group-hover:scale-110 transition-transform" />
+                  <span>Uninstall Service</span>
+                </button>
               </div>
             )}
           </div>
@@ -644,6 +808,135 @@ export default function ProfileBar({
                   </Button>
                 </div>
               </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Uninstall Confirmation Modal */}
+      <AnimatePresence>
+        {isUninstallConfirmOpen && (
+          <div
+            className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4"
+            onClick={() => setIsUninstallConfirmOpen(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-xl shadow-2xl border border-neutral-200 w-full max-w-sm p-5 text-black"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-start gap-3">
+                <div className="p-2 bg-red-50 text-red-600 rounded-lg shrink-0">
+                  <AlertCircle className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-neutral-900">
+                    Uninstall Background Service?
+                  </h3>
+                  <p className="text-xs text-neutral-500 mt-1">
+                    This runs the uninstaller script to stop the TouchBoard background engine and disable auto-run on login. Your profile triggers in config.json will remain preserved.
+                  </p>
+                  <label className="flex items-center gap-2 mt-3 text-xs text-neutral-600 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={purgeConfig}
+                      onChange={(e) => setPurgeConfig(e.target.checked)}
+                      className="rounded border-neutral-300 text-black focus:ring-black cursor-pointer"
+                    />
+                    <span>Also purge config directory</span>
+                  </label>
+                </div>
+              </div>
+              <div className="flex items-center justify-end gap-2 mt-5">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsUninstallConfirmOpen(false)}
+                  className="text-xs cursor-pointer"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleTriggerUninstallConfirm}
+                  className="text-xs cursor-pointer bg-red-600 hover:bg-red-700 text-white font-medium"
+                >
+                  Uninstall Service
+                </Button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Service Action Result / Progress Modal */}
+      <AnimatePresence>
+        {serviceModal.isOpen && (
+          <div
+            className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4"
+            onClick={() => {
+              if (serviceModal.status !== "loading") {
+                setServiceModal((prev) => ({ ...prev, isOpen: false }));
+              }
+            }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-xl shadow-2xl border border-neutral-200 w-full max-w-sm p-5 text-black"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-start gap-3">
+                <div
+                  className={`p-2 rounded-lg shrink-0 ${
+                    serviceModal.status === "loading"
+                      ? "bg-neutral-100 text-black"
+                      : serviceModal.status === "success"
+                      ? "bg-emerald-50 text-emerald-600"
+                      : "bg-red-50 text-red-600"
+                  }`}
+                >
+                  {serviceModal.status === "loading" && (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  )}
+                  {serviceModal.status === "success" && (
+                    <CheckCircle2 className="w-5 h-5" />
+                  )}
+                  {serviceModal.status === "error" && (
+                    <AlertCircle className="w-5 h-5" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-sm font-semibold text-neutral-900">
+                    {serviceModal.title}
+                  </h3>
+                  <p className="text-xs text-neutral-500 mt-1 whitespace-pre-wrap break-words">
+                    {serviceModal.message}
+                  </p>
+                  {serviceModal.details && (
+                    <pre className="mt-2 p-2 bg-neutral-50 rounded border border-neutral-200 text-[10px] font-mono text-neutral-600 max-h-32 overflow-y-auto">
+                      {serviceModal.details}
+                    </pre>
+                  )}
+                </div>
+              </div>
+              {serviceModal.status !== "loading" && (
+                <div className="flex items-center justify-end gap-2 mt-5">
+                  <Button
+                    size="sm"
+                    onClick={() =>
+                      setServiceModal((prev) => ({ ...prev, isOpen: false }))
+                    }
+                    className="text-xs cursor-pointer bg-black text-white hover:bg-neutral-800"
+                  >
+                    Done
+                  </Button>
+                </div>
+              )}
             </motion.div>
           </div>
         )}
