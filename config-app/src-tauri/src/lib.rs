@@ -52,6 +52,7 @@ fn pick_file() -> String {
 // Embedded script assets compiled directly into the binary
 const SCRIPT_MAIN_PY: &str = include_str!("../scripts/main.py");
 const SCRIPT_INSTALL_SH: &str = include_str!("../scripts/install_service.sh");
+const SCRIPT_UNINSTALL_SH: &str = include_str!("../scripts/uninstall_service.sh");
 const DEFAULT_CONFIG_JSON: &str = include_str!("../scripts/config.json");
 
 fn get_home_dir() -> Option<std::path::PathBuf> {
@@ -121,7 +122,7 @@ fn save_config(config_str: String) -> Result<(), String> {
 }
 
 #[tauri::command]
-fn setup_touchboard_service() -> Result<String, String> {
+fn setup_touchboard_service(force: Option<bool>) -> Result<String, String> {
     let home = get_home_dir().ok_or_else(|| "Could not determine user HOME directory".to_string())?;
     let config_dir = home.join(".config").join("touchboard");
     let scripts_dir = config_dir.join("scripts");
@@ -134,6 +135,7 @@ fn setup_touchboard_service() -> Result<String, String> {
     // 2. Extract embedded scripts into permanent config directory
     let main_py_path = scripts_dir.join("main.py");
     let install_sh_path = scripts_dir.join("install_service.sh");
+    let uninstall_sh_path = scripts_dir.join("uninstall_service.sh");
     let config_json_path = config_dir.join("config.json");
 
     std::fs::write(&main_py_path, SCRIPT_MAIN_PY)
@@ -142,24 +144,31 @@ fn setup_touchboard_service() -> Result<String, String> {
     std::fs::write(&install_sh_path, SCRIPT_INSTALL_SH)
         .map_err(|e| format!("Failed to write install_service.sh: {}", e))?;
 
+    std::fs::write(&uninstall_sh_path, SCRIPT_UNINSTALL_SH)
+        .map_err(|e| format!("Failed to write uninstall_service.sh: {}", e))?;
+
     // Write default config only if none exists yet, preserving any existing user settings
     if !config_json_path.exists() {
         let _ = std::fs::write(&config_json_path, DEFAULT_CONFIG_JSON);
     }
 
-    // Set execute permissions on install_service.sh on Unix systems
+    // Set execute permissions on scripts on Unix systems
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;
-        if let Ok(metadata) = std::fs::metadata(&install_sh_path) {
-            let mut perms = metadata.permissions();
-            perms.set_mode(0o755);
-            let _ = std::fs::set_permissions(&install_sh_path, perms);
+        for script_file in [&install_sh_path, &uninstall_sh_path] {
+            if let Ok(metadata) = std::fs::metadata(script_file) {
+                let mut perms = metadata.permissions();
+                perms.set_mode(0o755);
+                let _ = std::fs::set_permissions(script_file, perms);
+            }
         }
     }
 
-    // 3. If setup was already completed, return early
-    if marker.exists() {
+    let is_force = force.unwrap_or(false);
+
+    // 3. If setup was already completed and force is not set, return early
+    if marker.exists() && !is_force {
         return Ok(serde_json::json!({
             "installed": true,
             "is_first_run": false,
@@ -176,7 +185,7 @@ fn setup_touchboard_service() -> Result<String, String> {
     if output.status.success() {
         Ok(serde_json::json!({
             "installed": true,
-            "is_first_run": true,
+            "is_first_run": !is_force,
             "message": "TouchBoard background engine installed and started successfully.",
             "output": String::from_utf8_lossy(&output.stdout).trim()
         }).to_string())
@@ -186,6 +195,53 @@ fn setup_touchboard_service() -> Result<String, String> {
     }
 }
 
+#[tauri::command]
+fn install_touchboard_service() -> Result<String, String> {
+    setup_touchboard_service(Some(true))
+}
+
+#[tauri::command]
+fn uninstall_touchboard_service(purge: Option<bool>) -> Result<String, String> {
+    let home = get_home_dir().ok_or_else(|| "Could not determine user HOME directory".to_string())?;
+    let config_dir = home.join(".config").join("touchboard");
+    let scripts_dir = config_dir.join("scripts");
+    let uninstall_sh_path = scripts_dir.join("uninstall_service.sh");
+
+    // Ensure the uninstall script exists on disk
+    let _ = std::fs::create_dir_all(&scripts_dir);
+    if let Err(e) = std::fs::write(&uninstall_sh_path, SCRIPT_UNINSTALL_SH) {
+        return Err(format!("Failed to write uninstaller script: {}", e));
+    }
+
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        if let Ok(metadata) = std::fs::metadata(&uninstall_sh_path) {
+            let mut perms = metadata.permissions();
+            perms.set_mode(0o755);
+            let _ = std::fs::set_permissions(&uninstall_sh_path, perms);
+        }
+    }
+
+    let mut cmd = std::process::Command::new("bash");
+    cmd.arg(&uninstall_sh_path);
+    if purge.unwrap_or(false) {
+        cmd.arg("--purge");
+    }
+
+    let output = cmd.output().map_err(|e| format!("Failed to execute uninstaller: {}", e))?;
+
+    if output.status.success() {
+        Ok(serde_json::json!({
+            "uninstalled": true,
+            "message": "TouchBoard background service successfully uninstalled.",
+            "output": String::from_utf8_lossy(&output.stdout).trim()
+        }).to_string())
+    } else {
+        let err = String::from_utf8_lossy(&output.stderr);
+        Err(format!("Uninstallation failed: {}", err))
+    }
+}
 
 #[tauri::command]
 fn get_service_status() -> Result<String, String> {
@@ -244,6 +300,8 @@ pub fn run() {
             load_config,
             save_config,
             setup_touchboard_service,
+            install_touchboard_service,
+            uninstall_touchboard_service,
             get_service_status,
             restart_service,
             stop_service

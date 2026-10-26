@@ -231,14 +231,31 @@ export function downloadConfigFile(profiles, activeProfileId, serialPort = "/dev
 /**
  * Invokes setup_touchboard_service in Tauri backend to install background service on first launch.
  */
-export async function setupTouchboardService() {
+export async function setupTouchboardService(force = false) {
   if (typeof window !== "undefined" && (window.__TAURI_INTERNALS__ || window.__TAURI__)) {
     try {
       const { invoke } = await import("@tauri-apps/api/core");
-      const res = await invoke("setup_touchboard_service");
+      const res = await invoke("setup_touchboard_service", { force });
       return typeof res === "string" ? JSON.parse(res) : res;
     } catch (err) {
       console.warn("setup_touchboard_service failed:", err);
+      return { installed: false, error: String(err) };
+    }
+  }
+  return { installed: false, skipped: true, reason: "not_tauri" };
+}
+
+/**
+ * Manually executes the install script to configure and start the background service.
+ */
+export async function installTouchboardService() {
+  if (typeof window !== "undefined" && (window.__TAURI_INTERNALS__ || window.__TAURI__)) {
+    try {
+      const { invoke } = await import("@tauri-apps/api/core");
+      const res = await invoke("install_touchboard_service");
+      return typeof res === "string" ? JSON.parse(res) : res;
+    } catch (err) {
+      console.warn("install_touchboard_service failed:", err);
       return { installed: false, error: String(err) };
     }
   }
@@ -291,5 +308,23 @@ export async function stopService() {
     }
   }
   return "web";
+}
+
+/**
+ * Uninstalls the touchboard background service, stops and disables systemd unit,
+ * and optionally purges configuration directory.
+ */
+export async function uninstallTouchboardService(purge = false) {
+  if (typeof window !== "undefined" && (window.__TAURI_INTERNALS__ || window.__TAURI__)) {
+    try {
+      const { invoke } = await import("@tauri-apps/api/core");
+      const res = await invoke("uninstall_touchboard_service", { purge });
+      return typeof res === "string" ? JSON.parse(res) : res;
+    } catch (err) {
+      console.warn("uninstall_touchboard_service failed:", err);
+      return { uninstalled: false, error: String(err) };
+    }
+  }
+  return { uninstalled: false, skipped: true, reason: "not_tauri" };
 }
 
