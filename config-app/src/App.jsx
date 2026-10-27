@@ -1,9 +1,10 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { motion } from "motion/react";
 import "./App.css";
 import TopBar from "./components/TopBar";
 import ProfileBar from "./components/ProfileBar";
 import Bindblock from "./components/Bindblock";
+import { ICONS } from "@/lib/icons";
 import { Input } from "@/components/ui/input";
 import {
   DEFAULT_PROFILES,
@@ -116,8 +117,9 @@ function App() {
   }, []);
 
 
+
   // Update a single trigger combo within the active profile
-  const handleSave = (combo, updatedData) => {
+  const handleSave = useCallback((combo, updatedData) => {
     setProfiles((prev) => {
       const currentProfile = prev[activeProfileId] || {
         id: activeProfileId,
@@ -139,10 +141,10 @@ function App() {
       persistConfig(next, activeProfileId).then(() => setIsSaved(true));
       return next;
     });
-  };
+  }, [activeProfileId]);
 
   // Delete a trigger combo from the active profile
-  const handleDelete = (combo) => {
+  const handleDelete = useCallback((combo) => {
     setProfiles((prev) => {
       const currentProfile = prev[activeProfileId];
       if (!currentProfile) return prev;
@@ -159,10 +161,10 @@ function App() {
       persistConfig(next, activeProfileId).then(() => setIsSaved(true));
       return next;
     });
-  };
+  }, [activeProfileId]);
 
   // Drag to switch positions between binding numbers in active profile
-  const handleSwapCombos = (sourceCombo, targetCombo) => {
+  const handleSwapCombos = useCallback((sourceCombo, targetCombo) => {
     if (!sourceCombo || !targetCombo || sourceCombo === targetCombo) return;
 
     setProfiles((prev) => {
@@ -194,7 +196,124 @@ function App() {
       persistConfig(next, activeProfileId).then(() => setIsSaved(true));
       return next;
     });
-  };
+  }, [activeProfileId]);
+
+  // High-performance pointer drag state (no cursor coordinates in React state!)
+  const [dragState, setDragState] = useState({
+    isDragging: false,
+    sourceCombo: null,
+    sourceData: null,
+    targetCombo: null,
+    cardWidth: 0,
+    cardHeight: 0,
+    initialX: 0,
+    initialY: 0,
+  });
+
+  const dragOverlayRef = useRef(null);
+  const currentTargetRef = useRef(null);
+  const rafIdRef = useRef(null);
+
+  const handleCardPointerDown = useCallback((e, combo, bindData, isHandle) => {
+    // Only accept left mouse click or primary touch
+    if (e.button !== 0) return;
+
+    const isShift = e.shiftKey;
+    const canDrag = isHandle || isShift;
+
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const cardWidth = rect.width;
+    const cardHeight = rect.height;
+
+    let hasInitiatedDrag = false;
+
+    const onPointerMove = (moveEvent) => {
+      const dx = moveEvent.clientX - startX;
+      const dy = moveEvent.clientY - startY;
+      const distance = Math.hypot(dx, dy);
+
+      // Start drag once pointer moves more than 5px while holding Shift or dragging by handle
+      if (!hasInitiatedDrag && distance > 5 && (canDrag || moveEvent.shiftKey)) {
+        hasInitiatedDrag = true;
+        document.body.classList.add("cursor-grabbing");
+        currentTargetRef.current = null;
+
+        setDragState({
+          isDragging: true,
+          sourceCombo: combo,
+          sourceData: bindData,
+          targetCombo: null,
+          cardWidth,
+          cardHeight,
+          initialX: moveEvent.clientX,
+          initialY: moveEvent.clientY,
+        });
+      }
+
+      if (hasInitiatedDrag) {
+        // Direct GPU compositor transform update - zero React re-renders while moving!
+        if (dragOverlayRef.current) {
+          dragOverlayRef.current.style.transform = `translate3d(${moveEvent.clientX}px, ${moveEvent.clientY}px, 0) translate(-50%, -50%) scale(1.05)`;
+        }
+
+        // Throttle hit testing using requestAnimationFrame
+        if (!rafIdRef.current) {
+          rafIdRef.current = requestAnimationFrame(() => {
+            rafIdRef.current = null;
+            const elUnderPointer = document.elementFromPoint(moveEvent.clientX, moveEvent.clientY);
+            const cardUnderPointer = elUnderPointer?.closest("[data-combo]");
+            const hoveredCombo = cardUnderPointer?.getAttribute("data-combo") || null;
+            const newTarget = hoveredCombo && hoveredCombo !== combo ? hoveredCombo : null;
+
+            if (newTarget !== currentTargetRef.current) {
+              currentTargetRef.current = newTarget;
+              setDragState((prev) => (prev.targetCombo === newTarget ? prev : { ...prev, targetCombo: newTarget }));
+            }
+          });
+        }
+      }
+    };
+
+    const onPointerUp = (upEvent) => {
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+      window.removeEventListener("pointercancel", onPointerUp);
+      document.body.classList.remove("cursor-grabbing");
+
+      if (rafIdRef.current) {
+        cancelAnimationFrame(rafIdRef.current);
+        rafIdRef.current = null;
+      }
+
+      if (hasInitiatedDrag) {
+        const finalTarget = currentTargetRef.current;
+        if (finalTarget && finalTarget !== combo) {
+          handleSwapCombos(combo, finalTarget);
+        }
+
+        currentTargetRef.current = null;
+        setDragState({
+          isDragging: false,
+          sourceCombo: null,
+          sourceData: null,
+          targetCombo: null,
+          cardWidth: 0,
+          cardHeight: 0,
+          initialX: 0,
+          initialY: 0,
+        });
+      } else if (!isHandle && !isShift) {
+        // Clean single click -> toggle expand card
+        setExpandedCombo((prev) => (prev === combo ? null : combo));
+      }
+    };
+
+    window.addEventListener("pointermove", onPointerMove, { passive: true });
+    window.addEventListener("pointerup", onPointerUp);
+    window.addEventListener("pointercancel", onPointerUp);
+  }, [handleSwapCombos]);
 
   // Switch active profile
   const handleSelectProfile = (id) => {
@@ -645,6 +764,9 @@ function App() {
                 bindData={bindData}
                 isExpanded={item.isExpanded}
                 style={item.style}
+                isDraggingThis={dragState.isDragging && dragState.sourceCombo === item.combo}
+                isDropTarget={dragState.isDragging && dragState.targetCombo === item.combo}
+                onCardPointerDown={handleCardPointerDown}
                 onToggleExpand={(targetCombo) => setExpandedCombo(targetCombo)}
                 onSave={handleSave}
                 onDelete={handleDelete}
@@ -653,6 +775,58 @@ function App() {
             );
           })}
         </div>
+
+        {/* High-Performance Hardware-Accelerated Floating Drag Preview */}
+        {dragState.isDragging && (
+          <div
+            ref={dragOverlayRef}
+            className="fixed top-0 left-0 pointer-events-none z-50 rounded-2xl border-2 border-black bg-white shadow-2xl flex flex-col items-center justify-center p-4 opacity-95 transition-none"
+            style={{
+              transform: `translate3d(${dragState.initialX}px, ${dragState.initialY}px, 0) translate(-50%, -50%) scale(1.05)`,
+              width: `${dragState.cardWidth || 160}px`,
+              height: `${dragState.cardHeight || 120}px`,
+              willChange: "transform",
+            }}
+          >
+            <div className="absolute top-2.5 left-3 flex items-center gap-1.5 pointer-events-none">
+              <span className="font-mono text-xs text-neutral-500 font-medium">
+                {dragState.sourceCombo}
+              </span>
+              <div className="flex gap-1 items-center">
+                {dragState.sourceCombo?.split("").map((bit, bitIdx) => (
+                  <span
+                    key={bitIdx}
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      bit === "1" ? "bg-black" : "bg-neutral-300"
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+            <div className="flex flex-col items-center justify-center gap-2 text-center mt-2 pointer-events-none">
+              {dragState.sourceData ? (
+                <>
+                  <img
+                    src={
+                      ICONS[dragState.sourceData.icon || dragState.sourceData.type]?.src ||
+                      ICONS.run_command.src
+                    }
+                    alt="Trigger Icon"
+                    draggable={false}
+                    className="w-8 h-8 object-contain"
+                  />
+                  <span className="text-xs font-semibold text-gray-800 line-clamp-1 max-w-[130px]">
+                    {dragState.sourceData.name || `Macro ${dragState.sourceCombo}`}
+                  </span>
+                </>
+              ) : (
+                <span className="text-xs text-neutral-400 font-medium">
+                  Empty Trigger
+                </span>
+              )}
+            </div>
+          </div>
+        )}
 
         {filteredCombos.length === 0 && (
           <div className="text-center py-12 text-neutral-400 text-sm">

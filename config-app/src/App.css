@@ -40,3 +40,9 @@ body {
               background-color 0.2s ease;
   will-change: top, left, width, height;
 }
+
+.cursor-grabbing, .cursor-grabbing * {
+  cursor: grabbing !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}

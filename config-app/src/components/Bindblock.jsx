@@ -4,40 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { FolderOpen } from "lucide-react";
+import { FolderOpen, GripVertical } from "lucide-react";
 
-// SVGs from assets
-import terminalSvg from "@/assets/terminal.svg";
-import linkSvg from "@/assets/link.svg";
-import appSvg from "@/assets/app.svg";
-import plusSvg from "@/assets/plus.svg";
-import pasteSvg from "@/assets/paste.svg";
+// Assets and Icon mappings
+import { ICONS, plusSvg, terminalSvg, linkSvg, appSvg, pasteSvg } from "@/lib/icons";
 
-// Available icon mappings
-const ICONS = {
-    run_command: {
-        id: "run_command",
-        name: "Terminal (>_)",
-        src: terminalSvg,
-    },
-    open_url: {
-        id: "open_url",
-        name: "Web Link",
-        src: linkSvg,
-    },
-    launch_app: {
-        id: "launch_app",
-        name: "Application",
-        src: appSvg,
-    },
-    type_text: {
-        id: "type_text",
-        name: "Paste Function",
-        src: pasteSvg,
-    },
-};
-
-export const Bindblock = ({
+export const Bindblock = React.memo(({
     combo = "000001",
     index = 0,
     bindData = null,
@@ -47,6 +19,9 @@ export const Bindblock = ({
     onDelete,
     onSwapCombos,
     style = {},
+    isDraggingThis = false,
+    isDropTarget = false,
+    onCardPointerDown,
 }) => {
     const cardRef = useRef(null);
     const fileInputRef = useRef(null);
@@ -64,9 +39,7 @@ export const Bindblock = ({
         bindData?.payload?.press_enter ?? true
     );
 
-    // Drag and drop states
-    const [isDragging, setIsDragging] = useState(false);
-    const [isDragOver, setIsDragOver] = useState(false);
+    // Track Shift key for Shift+Drag mode cursor hint
     const [isShiftDown, setIsShiftDown] = useState(false);
 
     // Track Shift key for Shift+Drag mode
@@ -206,51 +179,6 @@ export const Bindblock = ({
                 : "col-span-1 sm:col-span-2 lg:col-span-2 lg:col-start-2" // Middle columns: expands to cols 2-3
         : "col-span-1";
 
-    // Drag & drop handlers: Drag only when Shift is pressed
-    const handleDragStart = (e) => {
-        if (isExpanded || !e.shiftKey) {
-            e.preventDefault();
-            return;
-        }
-        setIsDragging(true);
-        e.dataTransfer.effectAllowed = "move";
-        e.dataTransfer.setData("text/plain", combo);
-    };
-
-    const handleDragEnd = () => {
-        setIsDragging(false);
-        setIsDragOver(false);
-    };
-
-    const handleDragOver = (e) => {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = "move";
-    };
-
-    const handleDragEnter = (e) => {
-        e.preventDefault();
-        if (!isDragging) {
-            setIsDragOver(true);
-        }
-    };
-
-    const handleDragLeave = (e) => {
-        e.preventDefault();
-        if (!cardRef.current?.contains(e.relatedTarget)) {
-            setIsDragOver(false);
-        }
-    };
-
-    const handleDrop = (e) => {
-        e.preventDefault();
-        setIsDragOver(false);
-        setIsDragging(false);
-        const sourceCombo = e.dataTransfer.getData("text/plain");
-        if (sourceCombo && sourceCombo !== combo) {
-            onSwapCombos?.(sourceCombo, combo);
-        }
-    };
-
     const handleSave = (e) => {
         e.stopPropagation();
         const updatedData = {
@@ -261,8 +189,8 @@ export const Bindblock = ({
                 type === "open_url"
                     ? { urls: [command.trim()] }
                     : type === "type_text"
-                    ? { text: command, press_enter: pressEnter }
-                    : { command: command.trim() },
+                        ? { text: command, press_enter: pressEnter }
+                        : { command: command.trim() },
         };
         onSave?.(combo, updatedData);
         onToggleExpand?.(null);
@@ -281,6 +209,7 @@ export const Bindblock = ({
             <img
                 src={iconObj.src}
                 alt={iconObj.name}
+                draggable={false}
                 className={`${className} object-contain transition-transform`}
             />
         );
@@ -289,48 +218,68 @@ export const Bindblock = ({
     return (
         <div
             ref={cardRef}
+            data-combo={combo}
             style={style}
-            draggable={!isExpanded && isShiftDown}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-            onDragOver={handleDragOver}
-            onDragEnter={handleDragEnter}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-            onClick={(e) => {
-                // Normal click opens immediately when not holding shift
-                if (!isExpanded && !isDragging && !e.shiftKey) {
-                    onToggleExpand?.(combo);
+            onPointerDown={(e) => {
+                if (!isExpanded) {
+                    onCardPointerDown?.(e, combo, bindData, false);
                 }
             }}
-            className={`card-geometry-transition transform-gpu rounded-2xl border select-none overflow-hidden ${isDragging ? "opacity-30 scale-95 border-dashed border-black" : ""
-                } ${isDragOver
+            onMouseEnter={(e) => setIsShiftDown(e.shiftKey)}
+            onMouseMove={(e) => {
+                if (e.shiftKey !== isShiftDown) setIsShiftDown(e.shiftKey);
+            }}
+            onMouseLeave={() => setIsShiftDown(false)}
+            className={`card-geometry-transition transform-gpu rounded-2xl border select-none overflow-hidden ${
+                isDraggingThis ? "opacity-30 scale-95 border-dashed border-black" : ""
+            } ${
+                isDropTarget
                     ? "border-black ring-2 ring-black scale-[1.03] bg-neutral-50 shadow-md z-10"
                     : ""
-                } ${isExpanded
+            } ${
+                isExpanded
                     ? "border-black ring-1 ring-black bg-white shadow-none z-20"
-                    : `border-neutral-200 bg-white hover:border-black flex items-center justify-center group ${isShiftDown
-                        ? "cursor-grab active:cursor-grabbing ring-1 ring-neutral-400"
-                        : "cursor-pointer"
+                    : `border-neutral-200 bg-white hover:border-black flex items-center justify-center group ${
+                        isShiftDown
+                            ? "cursor-grab active:cursor-grabbing ring-1 ring-neutral-400"
+                            : "cursor-pointer"
                     }`
-                }`}
+            }`}
         >
             {/* Visual touch pin dots (a0 - a5) - only rendered in collapsed state */}
             {!isExpanded && (
-                <div className="absolute top-3 left-3 flex items-center gap-1.5 pointer-events-none">
-                    <span className="font-mono text-xs text-neutral-500 font-medium tracking-wide">
-                        {combo}
-                    </span>
-                    <div className="flex gap-1 items-center">
-                        {combo.split("").map((bit, bitIdx) => (
-                            <span
-                                key={bitIdx}
-                                className={`w-1.5 h-1.5 rounded-full shadow-xs ${bit === "1" ? "bg-black" : "bg-neutral-300"
+                <>
+                    <div className="absolute top-3 left-3 flex items-center gap-1.5 pointer-events-none">
+                        <span className="font-mono text-xs text-neutral-500 font-medium tracking-wide">
+                            {combo}
+                        </span>
+                        <div className="flex gap-1 items-center">
+                            {combo.split("").map((bit, bitIdx) => (
+                                <span
+                                    key={bitIdx}
+                                    className={`w-1.5 h-1.5 rounded-full shadow-xs ${
+                                        bit === "1" ? "bg-black" : "bg-neutral-300"
                                     }`}
-                            />
-                        ))}
+                                />
+                            ))}
+                        </div>
                     </div>
-                </div>
+
+                    {/* Dedicated Grip Handle in top-right */}
+                    <div
+                        data-drag-handle="true"
+                        onPointerDown={(e) => {
+                            e.stopPropagation();
+                            if (!isExpanded) {
+                                onCardPointerDown?.(e, combo, bindData, true);
+                            }
+                        }}
+                        className="absolute top-2.5 right-2.5 p-1 text-neutral-300 hover:text-black hover:bg-neutral-100 rounded-md cursor-grab active:cursor-grabbing transition-colors pointer-events-auto"
+                        title="Drag to swap trigger (or Shift+Drag anywhere on card)"
+                    >
+                        <GripVertical className="w-3.5 h-3.5" />
+                    </div>
+                </>
             )}
 
             <AnimatePresence initial={false}>
@@ -355,7 +304,7 @@ export const Bindblock = ({
                         ) : (
                             /* Unconfigured: plus icon */
                             <div className="w-10 h-10 rounded-full flex items-center justify-center text-neutral-400 group-hover:text-black group-hover:scale-110 transition-all duration-200">
-                                <img src={plusSvg} alt="Add Bind" className="w-6 h-6 object-contain" />
+                                <img src={plusSvg} alt="Add Bind" draggable={false} className="w-6 h-6 object-contain" />
                             </div>
                         )}
                     </motion.div>
@@ -614,6 +563,6 @@ export const Bindblock = ({
             </AnimatePresence>
         </div>
     );
-};
+});
 
 export default Bindblock;
