@@ -4,7 +4,10 @@ import subprocess
 import sys
 import time
 import webbrowser
-# import pyautogui
+try:
+    import pyautogui
+except Exception:
+    pyautogui = None
 import serial
 
 def resolve_config_path() -> str:
@@ -46,15 +49,15 @@ def action_launch_app(payload):
     if cmd:
         subprocess.Popen(cmd, shell=True)
 
-# def action_type_text(payload):
-#     if pyautogui is None:
-#         print("Warning: pyautogui is not installed. Run 'uv pip install pyautogui' to enable type_text.")
-#         return
-#     text = payload.get("text", "")
-#     interval = payload.get("interval", 0.02)
-#     pyautogui.write(text, interval=interval)
-#     if payload.get("press_enter", False):
-#         pyautogui.press("enter")
+def action_type_text(payload):
+    if pyautogui is None:
+        print("Warning: pyautogui is not installed. Run 'uv pip install pyautogui' to enable type_text.")
+        return
+    text = payload.get("text", "")
+    interval = payload.get("interval", 0.02)
+    pyautogui.write(text, interval=interval)
+    if payload.get("press_enter", False):
+        pyautogui.press("enter")
 
 def action_run_command(payload):
     cmd = payload.get("command", "")
@@ -76,7 +79,7 @@ def action_run_command(payload):
 ACTION_HANDLERS = {
     "open_url": action_open_url,
     "launch_app": action_launch_app,
-    # "type_text": action_type_text,
+    "type_text": action_type_text,
     "run_command": action_run_command,
 }
 

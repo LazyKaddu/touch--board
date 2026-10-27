@@ -25,7 +25,12 @@
   "bundle": {
     "active": true,
     "targets": [
-      "appimage"
+      "appimage",
+      "msi",
+      "deb",
+      "nsis",
+      "dmg",
+      "rpm"
     ],
     "resources": [
       "scripts/*"
