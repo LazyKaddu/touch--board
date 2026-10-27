@@ -236,7 +236,7 @@ export const Bindblock = React.memo(({
                     : ""
                 } ${isExpanded
                     ? "border-black ring-1 ring-black bg-white shadow-none z-20"
-                    : `border-neutral-200 bg-white hover:border-black flex items-center justify-center group ${isShiftDown
+                    : `border-neutral-300 bg-white hover:border-black flex items-center justify-center group ${isShiftDown
                         ? "cursor-grab active:cursor-grabbing ring-1 ring-neutral-400"
                         : "cursor-pointer"
                     }`
