@@ -90,7 +90,12 @@ class TestBinarySerialHandling(unittest.TestCase):
         config = main.load_config()
         triggers, _ = main.get_active_triggers(config)
         if not all(k in triggers for k in ["100000", "010000", "000100", "110000"]):
-            triggers = config.get("profiles", {}).get("coding", {}).get("triggers", config.get("triggers", {}))
+            triggers = {
+                "100000": {"type": "open_url", "name": "Test URL", "payload": {"urls": ["https://example.com"]}},
+                "010000": {"type": "launch_app", "name": "Test App", "payload": {"command": "app"}},
+                "000100": {"type": "run_command", "name": "Test Command", "payload": {"command": "echo test"}},
+                "110000": {"type": "launch_app", "name": "Test Combo", "payload": {"command": "combo"}},
+            }
         recorded_actions = []
 
         def spy_action(name):

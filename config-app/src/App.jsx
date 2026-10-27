@@ -7,7 +7,6 @@ import Bindblock from "./components/Bindblock";
 import { ICONS } from "@/lib/icons";
 import { Input } from "@/components/ui/input";
 import {
-  DEFAULT_PROFILES,
   STORAGE_KEY,
   loadFromLocalStorage,
   persistConfig,
@@ -333,10 +332,6 @@ function App() {
     let initialTriggers = {};
     if (template === "clone") {
       initialTriggers = { ...(profiles[activeProfileId]?.triggers || {}) };
-    } else if (template === "coding") {
-      initialTriggers = { ...(DEFAULT_PROFILES.coding?.triggers || {}) };
-    } else if (template === "chilling") {
-      initialTriggers = { ...(DEFAULT_PROFILES.chilling?.triggers || {}) };
     }
 
     const newProfile = {

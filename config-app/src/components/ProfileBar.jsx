@@ -53,7 +53,7 @@ export default function ProfileBar({
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [newProfileName, setNewProfileName] = useState("");
   const [newProfileIcon, setNewProfileIcon] = useState("sparkles");
-  const [newProfileTemplate, setNewProfileTemplate] = useState("clone"); // 'empty' | 'clone' | 'coding' | 'chilling'
+  const [newProfileTemplate, setNewProfileTemplate] = useState("empty"); // 'empty' | 'clone'
 
   // Context menu for individual profile (3-dots button)
   const [menuProfileId, setMenuProfileId] = useState(null);
@@ -723,28 +723,6 @@ export default function ProfileBar({
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     <label
                       className={`flex flex-col p-2.5 rounded-lg border cursor-pointer transition-all ${
-                        newProfileTemplate === "clone"
-                          ? "border-black bg-neutral-50/80 font-medium"
-                          : "border-neutral-200 hover:border-neutral-300"
-                      }`}
-                    >
-                      <div className="flex items-center gap-1.5">
-                        <input
-                          type="radio"
-                          name="template"
-                          checked={newProfileTemplate === "clone"}
-                          onChange={() => setNewProfileTemplate("clone")}
-                          className="accent-black"
-                        />
-                        <span className="font-semibold text-neutral-900">Clone Active</span>
-                      </div>
-                      <span className="text-[11px] text-neutral-500 mt-1 pl-4">
-                        Copy triggers from "{activeProfile?.name || "current"}"
-                      </span>
-                    </label>
-
-                    <label
-                      className={`flex flex-col p-2.5 rounded-lg border cursor-pointer transition-all ${
                         newProfileTemplate === "empty"
                           ? "border-black bg-neutral-50/80 font-medium"
                           : "border-neutral-200 hover:border-neutral-300"
@@ -767,7 +745,7 @@ export default function ProfileBar({
 
                     <label
                       className={`flex flex-col p-2.5 rounded-lg border cursor-pointer transition-all ${
-                        newProfileTemplate === "coding"
+                        newProfileTemplate === "clone"
                           ? "border-black bg-neutral-50/80 font-medium"
                           : "border-neutral-200 hover:border-neutral-300"
                       }`}
@@ -776,36 +754,14 @@ export default function ProfileBar({
                         <input
                           type="radio"
                           name="template"
-                          checked={newProfileTemplate === "coding"}
-                          onChange={() => setNewProfileTemplate("coding")}
+                          checked={newProfileTemplate === "clone"}
+                          onChange={() => setNewProfileTemplate("clone")}
                           className="accent-black"
                         />
-                        <span className="font-semibold text-neutral-900">Coding Template</span>
+                        <span className="font-semibold text-neutral-900">Clone Active</span>
                       </div>
                       <span className="text-[11px] text-neutral-500 mt-1 pl-4">
-                        GitHub, IDE, dev scripts
-                      </span>
-                    </label>
-
-                    <label
-                      className={`flex flex-col p-2.5 rounded-lg border cursor-pointer transition-all ${
-                        newProfileTemplate === "chilling"
-                          ? "border-black bg-neutral-50/80 font-medium"
-                          : "border-neutral-200 hover:border-neutral-300"
-                      }`}
-                    >
-                      <div className="flex items-center gap-1.5">
-                        <input
-                          type="radio"
-                          name="template"
-                          checked={newProfileTemplate === "chilling"}
-                          onChange={() => setNewProfileTemplate("chilling")}
-                          className="accent-black"
-                        />
-                        <span className="font-semibold text-neutral-900">Chilling Template</span>
-                      </div>
-                      <span className="text-[11px] text-neutral-500 mt-1 pl-4">
-                        YouTube, Spotify, relax
+                        Copy triggers from "{activeProfile?.name || "current"}"
                       </span>
                     </label>
                   </div>

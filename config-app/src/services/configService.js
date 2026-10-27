@@ -1,82 +1,20 @@
 // Configuration & Profile Persistence Service for TouchBoard
 // Supports LocalStorage (instant client persistence) and file persistence via Tauri / Vite API
 
-export const STORAGE_KEY = "touchboard_profiles_data_v1";
+export const STORAGE_KEY = "touchboard_profiles_data_v2";
 
 export const DEFAULT_PROFILES = {
   coding: {
     id: "coding",
     name: "Coding",
     icon: "code",
-    triggers: {
-      "100000": {
-        name: "Dev Websites",
-        type: "open_url",
-        icon: "open_url",
-        payload: { urls: ["https://github.com"] },
-      },
-      "010000": {
-        name: "Open Antigravity IDE",
-        type: "run_command",
-        icon: "run_command",
-        payload: { command: "~/Downloads/'Antigravity IDE'/antigravity-ide &" },
-      },
-      "001000": {
-        name: "Insert Text",
-        type: "type_text",
-        icon: "type_text",
-        payload: { text: "MySecretPassword123!", press_enter: true },
-      },
-      "000100": {
-        name: "Run Vite Dev",
-        type: "run_command",
-        icon: "run_command",
-        payload: { command: "brave-browser 'web.whatsapp.com'" },
-      },
-      "110000": {
-        name: "Secret Combo: Open Spotify",
-        type: "launch_app",
-        icon: "launch_app",
-        payload: { command: "spotify.exe" },
-      },
-    },
+    triggers: {},
   },
   chilling: {
     id: "chilling",
     name: "Chilling",
     icon: "coffee",
-    triggers: {
-      "100000": {
-        name: "Lofi & Relax Beats",
-        type: "open_url",
-        icon: "open_url",
-        payload: { urls: ["https://music.youtube.com"] },
-      },
-      "100001": {
-        name: "Open Youtube",
-        type: "run_command",
-        icon: "run_command",
-        payload: { command: "brave-browser 'https://www.youtube.com'" },
-      },
-      "101000": {
-        name: "Open Instagram",
-        type: "run_command",
-        icon: "run_command",
-        payload: { command: "brave-browser 'https://www.instagram.com'" },
-      },
-      "010000": {
-        name: "Chill Movies / Netflix",
-        type: "open_url",
-        icon: "open_url",
-        payload: { urls: ["https://www.netflix.com"] },
-      },
-      "110000": {
-        name: "Secret Combo: Open Spotify",
-        type: "launch_app",
-        icon: "launch_app",
-        payload: { command: "spotify.exe" },
-      },
-    },
+    triggers: {},
   },
 };
 
