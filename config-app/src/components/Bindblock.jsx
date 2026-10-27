@@ -230,21 +230,17 @@ export const Bindblock = React.memo(({
                 if (e.shiftKey !== isShiftDown) setIsShiftDown(e.shiftKey);
             }}
             onMouseLeave={() => setIsShiftDown(false)}
-            className={`card-geometry-transition transform-gpu rounded-2xl border select-none overflow-hidden ${
-                isDraggingThis ? "opacity-30 scale-95 border-dashed border-black" : ""
-            } ${
-                isDropTarget
+            className={`card-geometry-transition transform-gpu rounded-2xl border select-none overflow-hidden ${isDraggingThis ? "opacity-30 scale-95 border-dashed border-black" : ""
+                } ${isDropTarget
                     ? "border-black ring-2 ring-black scale-[1.03] bg-neutral-50 shadow-md z-10"
                     : ""
-            } ${
-                isExpanded
+                } ${isExpanded
                     ? "border-black ring-1 ring-black bg-white shadow-none z-20"
-                    : `border-neutral-200 bg-white hover:border-black flex items-center justify-center group ${
-                        isShiftDown
-                            ? "cursor-grab active:cursor-grabbing ring-1 ring-neutral-400"
-                            : "cursor-pointer"
+                    : `border-neutral-200 bg-white hover:border-black flex items-center justify-center group ${isShiftDown
+                        ? "cursor-grab active:cursor-grabbing ring-1 ring-neutral-400"
+                        : "cursor-pointer"
                     }`
-            }`}
+                }`}
         >
             {/* Visual touch pin dots (a0 - a5) - only rendered in collapsed state */}
             {!isExpanded && (
@@ -257,9 +253,8 @@ export const Bindblock = React.memo(({
                             {combo.split("").map((bit, bitIdx) => (
                                 <span
                                     key={bitIdx}
-                                    className={`w-1.5 h-1.5 rounded-full shadow-xs ${
-                                        bit === "1" ? "bg-black" : "bg-neutral-300"
-                                    }`}
+                                    className={`w-1.5 h-1.5 rounded-full shadow-xs ${bit === "1" ? "bg-black" : "bg-neutral-300"
+                                        }`}
                                 />
                             ))}
                         </div>
@@ -499,7 +494,7 @@ export const Bindblock = React.memo(({
                                                 variant="outline"
                                                 onClick={handlePickFile}
                                                 disabled={isPickingFile}
-                                                className="shrink-0 text-xs gap-1.5 h-9 px-3 border-neutral-300 hover:border-black hover:bg-neutral-50 cursor-pointer font-medium"
+                                                className="shrink-0 text-xs gap-1.5 h-9 px-3 border-neutral-300 hover:bg-[#3a3939] hover:text-white  cursor-pointer font-medium"
                                                 title="Search through files and folders to get full location"
                                             >
                                                 <FolderOpen className={`w-3.5 h-3.5 ${isPickingFile ? "animate-pulse" : ""}`} />
