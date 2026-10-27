@@ -43,14 +43,6 @@
                         "press_enter": true
                     }
                 },
-                "000100": {
-                    "name": "Run Vite Dev",
-                    "type": "run_command",
-                    "icon": "run_command",
-                    "payload": {
-                        "command": "brave-browser 'web.whatsapp.com'"
-                    }
-                },
                 "000001": {
                     "name": "Macro 000001",
                     "type": "run_command",
@@ -59,32 +51,12 @@
                         "command": ""
                     }
                 },
-                "000111": {
-                    "name": "open github",
-                    "type": "open_url",
-                    "icon": "open_url",
-                    "payload": {
-                        "urls": [
-                            "http://github.com"
-                        ]
-                    }
-                },
                 "000011": {
-                    "name": "Telegram",
-                    "type": "launch_app",
-                    "icon": "launch_app",
+                    "name": "Run Vite Dev",
+                    "type": "run_command",
+                    "icon": "run_command",
                     "payload": {
-                        "command": "/home/kaddulive/Downloads/Telegram/Telegram"
-                    }
-                },
-                "000010": {
-                    "name": "open instagram",
-                    "type": "open_url",
-                    "icon": "open_url",
-                    "payload": {
-                        "urls": [
-                            "instagram.com"
-                        ]
+                        "command": "brave-browser 'web.whatsapp.com'"
                     }
                 }
             }
@@ -137,24 +109,6 @@
                             "https://www.netflix.com"
                         ]
                     }
-                },
-                "000010": {
-                    "name": "Macro 000010",
-                    "type": "open_url",
-                    "icon": "open_url",
-                    "payload": {
-                        "urls": [
-                            "music.youtube.com"
-                        ]
-                    }
-                },
-                "001000": {
-                    "name": "Brave-browser",
-                    "type": "launch_app",
-                    "icon": "launch_app",
-                    "payload": {
-                        "command": "/usr/bin/brave-browser"
-                    }
                 }
             }
         }
@@ -195,14 +149,6 @@
                 "press_enter": true
             }
         },
-        "000100": {
-            "name": "Run Vite Dev",
-            "type": "run_command",
-            "icon": "run_command",
-            "payload": {
-                "command": "brave-browser 'web.whatsapp.com'"
-            }
-        },
         "000001": {
             "name": "Macro 000001",
             "type": "run_command",
@@ -211,32 +157,12 @@
                 "command": ""
             }
         },
-        "000111": {
-            "name": "open github",
-            "type": "open_url",
-            "icon": "open_url",
-            "payload": {
-                "urls": [
-                    "http://github.com"
-                ]
-            }
-        },
         "000011": {
-            "name": "Telegram",
-            "type": "launch_app",
-            "icon": "launch_app",
+            "name": "Run Vite Dev",
+            "type": "run_command",
+            "icon": "run_command",
             "payload": {
-                "command": "/home/kaddulive/Downloads/Telegram/Telegram"
-            }
-        },
-        "000010": {
-            "name": "open instagram",
-            "type": "open_url",
-            "icon": "open_url",
-            "payload": {
-                "urls": [
-                    "instagram.com"
-                ]
+                "command": "brave-browser 'web.whatsapp.com'"
             }
         }
     }
