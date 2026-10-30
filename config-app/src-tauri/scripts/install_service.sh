@@ -23,6 +23,10 @@ mkdir -p "${SYSTEMD_USER_DIR}"
 if [ -f "${SCRIPT_DIR}/main.py" ] && [ "${SCRIPT_DIR}" != "${TARGET_SCRIPTS_DIR}" ]; then
     cp -f "${SCRIPT_DIR}/main.py" "${TARGET_SCRIPTS_DIR}/main.py"
 fi
+if [ -f "${SCRIPT_DIR}/uninstall_service.sh" ] && [ "${SCRIPT_DIR}" != "${TARGET_SCRIPTS_DIR}" ]; then
+    cp -f "${SCRIPT_DIR}/uninstall_service.sh" "${TARGET_SCRIPTS_DIR}/uninstall_service.sh"
+    chmod +x "${TARGET_SCRIPTS_DIR}/uninstall_service.sh"
+fi
 
 # Copy initial config if not already present, preserving user settings
 if [ ! -f "${CONFIG_DIR}/config.json" ]; then
@@ -77,9 +81,18 @@ if [ -z "${PYTHON_BIN}" ]; then
     PYTHON_BIN="${CONFIG_DIR}/venv/bin/python"
 fi
 
+# 2b. Deploy launcher wrapper
+if [ -f "${SCRIPT_DIR}/launch.sh" ] && [ "${SCRIPT_DIR}" != "${TARGET_SCRIPTS_DIR}" ]; then
+    cp -f "${SCRIPT_DIR}/launch.sh" "${TARGET_SCRIPTS_DIR}/launch.sh"
+fi
+chmod +x "${TARGET_SCRIPTS_DIR}/launch.sh"
+
 echo "Using Python executable: ${PYTHON_BIN}"
 
 # 3. Generate systemd user service
+#    NOTE: We do NOT hardcode DISPLAY, WAYLAND_DISPLAY, KDE_SESSION_VERSION, etc.
+#    The launch.sh wrapper dynamically imports these from the live session at runtime.
+#    This is what fixes the "broken after cold restart" problem.
 cat <<EOF > "${SERVICE_FILE}"
 [Unit]
 Description=TouchBoard Capacitive Touch Automation Engine
@@ -89,15 +102,10 @@ PartOf=graphical-session.target
 [Service]
 Type=simple
 WorkingDirectory=${TARGET_SCRIPTS_DIR}
-ExecStart=${PYTHON_BIN} ${TARGET_SCRIPTS_DIR}/main.py
+ExecStart=/bin/bash ${TARGET_SCRIPTS_DIR}/launch.sh
 Restart=always
 RestartSec=3
 Environment=PYTHONUNBUFFERED=1
-Environment=DISPLAY=${DISPLAY:-:0}
-Environment=WAYLAND_DISPLAY=${WAYLAND_DISPLAY}
-Environment=XDG_CURRENT_DESKTOP=${XDG_CURRENT_DESKTOP}
-Environment=XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR}
-Environment=DBUS_SESSION_BUS_ADDRESS=${DBUS_SESSION_BUS_ADDRESS}
 
 [Install]
 WantedBy=default.target

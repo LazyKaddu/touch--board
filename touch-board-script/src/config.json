@@ -9,11 +9,54 @@
             "icon": "code",
             "triggers": {
                 "000001": {
-                    "name": "kaddu",
-                    "type": "run_command",
-                    "icon": "run_command",
+                    "name": "Sudo Pass",
+                    "type": "type_text",
+                    "icon": "type_text",
                     "payload": {
-                        "command": ""
+                        "text": "Kaddulive@0",
+                        "press_enter": true
+                    }
+                },
+                "000010": {
+                    "name": "Brave",
+                    "type": "launch_app",
+                    "icon": "launch_app",
+                    "payload": {
+                        "command": "/usr/bin/brave-browser"
+                    }
+                },
+                "000100": {
+                    "name": "Antigravity-ide",
+                    "type": "launch_app",
+                    "icon": "launch_app",
+                    "payload": {
+                        "command": "/home/kaddulive/Downloads/'Antigravity IDE'/antigravity-ide"
+                    }
+                },
+                "001110": {
+                    "name": "Konsole",
+                    "type": "launch_app",
+                    "icon": "launch_app",
+                    "payload": {
+                        "command": "/usr/bin/konsole"
+                    }
+                },
+                "011000": {
+                    "name": "docker",
+                    "type": "type_text",
+                    "icon": "type_text",
+                    "payload": {
+                        "text": "sudo docker compose up --build",
+                        "press_enter": true
+                    }
+                },
+                "001010": {
+                    "name": "cd ~",
+                    "type": "type_text",
+                    "icon": "type_text",
+                    "payload": {
+                        "text": "cd ~",
+                        "press_enter": true
                     }
                 }
             }
@@ -27,11 +70,54 @@
     },
     "triggers": {
         "000001": {
-            "name": "kaddu",
-            "type": "run_command",
-            "icon": "run_command",
+            "name": "Sudo Pass",
+            "type": "type_text",
+            "icon": "type_text",
             "payload": {
-                "command": ""
+                "text": "Kaddulive@0",
+                "press_enter": true
+            }
+        },
+        "000010": {
+            "name": "Brave",
+            "type": "launch_app",
+            "icon": "launch_app",
+            "payload": {
+                "command": "/usr/bin/brave-browser"
+            }
+        },
+        "000100": {
+            "name": "Antigravity-ide",
+            "type": "launch_app",
+            "icon": "launch_app",
+            "payload": {
+                "command": "/home/kaddulive/Downloads/'Antigravity IDE'/antigravity-ide"
+            }
+        },
+        "001110": {
+            "name": "Konsole",
+            "type": "launch_app",
+            "icon": "launch_app",
+            "payload": {
+                "command": "/usr/bin/konsole"
+            }
+        },
+        "011000": {
+            "name": "docker",
+            "type": "type_text",
+            "icon": "type_text",
+            "payload": {
+                "text": "sudo docker compose up --build",
+                "press_enter": true
+            }
+        },
+        "001010": {
+            "name": "cd ~",
+            "type": "type_text",
+            "icon": "type_text",
+            "payload": {
+                "text": "cd ~",
+                "press_enter": true
             }
         }
     }

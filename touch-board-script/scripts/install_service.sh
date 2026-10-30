@@ -23,6 +23,14 @@ mkdir -p "${SYSTEMD_USER_DIR}"
 
 # 2. Deploy script files
 cp -f "${WORKSPACE_ROOT}/src/main.py" "${TARGET_SCRIPTS_DIR}/main.py"
+if [ -f "${SCRIPT_DIR}/launch.sh" ]; then
+    cp -f "${SCRIPT_DIR}/launch.sh" "${TARGET_SCRIPTS_DIR}/launch.sh"
+    chmod +x "${TARGET_SCRIPTS_DIR}/launch.sh"
+fi
+if [ -f "${SCRIPT_DIR}/uninstall_service.sh" ]; then
+    cp -f "${SCRIPT_DIR}/uninstall_service.sh" "${TARGET_SCRIPTS_DIR}/uninstall_service.sh"
+    chmod +x "${TARGET_SCRIPTS_DIR}/uninstall_service.sh"
+fi
 
 # Only copy initial config if not already present, preserving user settings
 if [ ! -f "${CONFIG_DIR}/config.json" ]; then
@@ -80,6 +88,9 @@ fi
 echo "Using Python executable: ${PYTHON_BIN}"
 
 # 4. Generate systemd user service
+#    NOTE: We do NOT hardcode DISPLAY, WAYLAND_DISPLAY, KDE_SESSION_VERSION, etc.
+#    The launch.sh wrapper dynamically imports these from the live session at runtime.
+#    This prevents stale environment issues after cold restarts.
 cat <<EOF > "${SERVICE_FILE}"
 [Unit]
 Description=TouchBoard Capacitive Touch Automation Engine
@@ -89,15 +100,10 @@ PartOf=graphical-session.target
 [Service]
 Type=simple
 WorkingDirectory=${TARGET_SCRIPTS_DIR}
-ExecStart=${PYTHON_BIN} ${TARGET_SCRIPTS_DIR}/main.py
+ExecStart=/bin/bash ${TARGET_SCRIPTS_DIR}/launch.sh
 Restart=always
 RestartSec=3
 Environment=PYTHONUNBUFFERED=1
-Environment=DISPLAY=${DISPLAY:-:0}
-Environment=WAYLAND_DISPLAY=${WAYLAND_DISPLAY}
-Environment=XDG_CURRENT_DESKTOP=${XDG_CURRENT_DESKTOP}
-Environment=XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR}
-Environment=DBUS_SESSION_BUS_ADDRESS=${DBUS_SESSION_BUS_ADDRESS}
 
 [Install]
 WantedBy=default.target
