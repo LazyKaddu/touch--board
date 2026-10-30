@@ -1,15 +1,31 @@
 import json
+import logging
 import os
 import subprocess
 import sys
 import time
 import webbrowser
+
 try:
     import pyautogui
 except Exception:
     pyautogui = None
 
+# Disable fail-safe so the service doesn't crash when the cursor is at a
+# screen corner (common at boot before the user moves the mouse).
+if pyautogui is not None:
+    pyautogui.FAILSAFE = False
+
 import serial
+
+# Configure logging with timestamps and severity level
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+logger = logging.getLogger("TouchBoard")
+
 
 def resolve_config_path() -> str:
     """Finds the active config.json path.
@@ -32,8 +48,8 @@ def resolve_config_path() -> str:
 
     return local_config
 
-CONFIG_FILE = resolve_config_path()
 
+CONFIG_FILE = resolve_config_path()
 
 
 # --- 1. Modular Helper Functions ---
@@ -43,27 +59,34 @@ def action_open_url(payload):
     if isinstance(urls, str):
         urls = [urls]
     for url in urls:
+        logger.info("Opening URL: %s", url)
         webbrowser.open(url)
+
 
 def action_launch_app(payload):
     cmd = payload.get("command")
     if cmd:
+        logger.info("Launching app: %s", cmd)
         subprocess.Popen(cmd, shell=True)
+
 
 def action_type_text(payload):
     if pyautogui is None:
-        print("Warning: pyautogui is not installed. Run 'uv pip install pyautogui' to enable type_text.")
+        logger.warning("pyautogui is not installed. Run 'uv pip install pyautogui' to enable type_text.")
         return
     text = payload.get("text", "")
     interval = payload.get("interval", 0.02)
+    logger.info("Typing text (%d chars)", len(text))
     pyautogui.write(text, interval=interval)
     if payload.get("press_enter", False):
         pyautogui.press("enter")
 
+
 def action_run_command(payload):
     cmd = payload.get("command", "")
     cwd = payload.get("working_dir", ".")
-    
+    logger.info("Running command: %s (cwd: %s)", cmd, cwd)
+
     if sys.platform == "win32":
         # Windows: Spawns a dedicated visible CMD terminal
         creationflags = getattr(subprocess, "CREATE_NEW_CONSOLE", 0)
@@ -76,6 +99,7 @@ def action_run_command(payload):
         # Non-Windows fallback (Linux/macOS)
         subprocess.Popen(cmd, shell=True, cwd=cwd)
 
+
 # Action Registry
 ACTION_HANDLERS = {
     "open_url": action_open_url,
@@ -84,6 +108,7 @@ ACTION_HANDLERS = {
     "run_command": action_run_command,
 }
 
+
 # --- 2. Config Loader ---
 
 def load_config():
@@ -91,6 +116,7 @@ def load_config():
         raise FileNotFoundError(f"Missing {CONFIG_FILE}")
     with open(CONFIG_FILE, "r") as f:
         return json.load(f)
+
 
 # --- 3. Packet Parser & State Handler ---
 
@@ -104,6 +130,7 @@ def parse_binary_packet(raw_line: str) -> str | None:
         return clean
     return None
 
+
 def handle_binary_state(binary_str: str, triggers: dict, last_active_key: str | None) -> str | None:
     """Handles debouncing and action triggering for a 6-character binary state.
     Returns the updated last_active_key.
@@ -115,13 +142,21 @@ def handle_binary_state(binary_str: str, triggers: dict, last_active_key: str | 
     if binary_str != last_active_key:
         trigger = triggers.get(binary_str)
         if trigger:
-            print(f"Triggered: {trigger.get('name', binary_str)}")
-            action_fn = ACTION_HANDLERS.get(trigger.get("type"))
+            name = trigger.get("name", binary_str)
+            action_type = trigger.get("type")
+            logger.info("Triggered: %s", name)
+            action_fn = ACTION_HANDLERS.get(action_type)
             if action_fn:
-                action_fn(trigger.get("payload", {}))
+                try:
+                    action_fn(trigger.get("payload", {}))
+                except Exception as e:
+                    logger.error("Error executing action '%s': %s", name, e)
+            else:
+                logger.warning("No handler for action type: %s", action_type)
         return binary_str
 
     return last_active_key
+
 
 def get_active_triggers(config: dict) -> tuple[dict, str]:
     """Retrieves triggers for the active profile, falling back to top-level triggers."""
@@ -136,6 +171,7 @@ def get_active_triggers(config: dict) -> tuple[dict, str]:
                 return p.get("triggers", {}), p.get("name", key)
     return config.get("triggers", {}), active_profile_key or "Default"
 
+
 # --- 4. Serial Execution Loop ---
 
 def main():
@@ -146,18 +182,18 @@ def main():
 
     try:
         ser = serial.Serial(port, baud, timeout=1)
-        print(f"Engine running. Connected to {port}...")
-        print(f"Active Profile: '{profile_name}' ({len(triggers)} triggers configured)")
+        logger.info("Engine running. Connected to %s...", port)
+        logger.info("Active Profile: '%s' (%d triggers configured)", profile_name, len(triggers))
         time.sleep(2)
     except Exception as e:
-        print(f"Error opening serial port: {e}")
+        logger.error("Error opening serial port: %s", e)
         return
 
     last_active_key = None
     last_mtime = os.path.getmtime(CONFIG_FILE) if os.path.exists(CONFIG_FILE) else 0
 
     try:
-        print("Waiting for touch input... (Press Ctrl+C to stop)")
+        logger.info("Waiting for touch input... (Press Ctrl+C to stop)")
         while True:
             # Check for live config file modifications (e.g. profile switched in UI)
             try:
@@ -166,7 +202,7 @@ def main():
                     last_mtime = current_mtime
                     new_config = load_config()
                     triggers, profile_name = get_active_triggers(new_config)
-                    print(f"\n[TouchBoard] Profile updated! Active: '{profile_name}' ({len(triggers)} triggers)")
+                    logger.info("Profile updated! Active: '%s' (%d triggers)", profile_name, len(triggers))
             except Exception:
                 pass
 
@@ -177,9 +213,10 @@ def main():
             if binary_str:
                 last_active_key = handle_binary_state(binary_str, triggers, last_active_key)
     except KeyboardInterrupt:
-        print("\nStopping...")
+        logger.info("Stopping...")
     finally:
         ser.close()
+
 
 if __name__ == "__main__":
     main()
