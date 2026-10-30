@@ -51,6 +51,7 @@ fn pick_file() -> String {
 
 // Embedded script assets compiled directly into the binary
 const SCRIPT_MAIN_PY: &str = include_str!("../scripts/main.py");
+const SCRIPT_LAUNCH_SH: &str = include_str!("../scripts/launch.sh");
 const SCRIPT_INSTALL_SH: &str = include_str!("../scripts/install_service.sh");
 const SCRIPT_UNINSTALL_SH: &str = include_str!("../scripts/uninstall_service.sh");
 const DEFAULT_CONFIG_JSON: &str = include_str!("../scripts/config.json");
@@ -134,12 +135,16 @@ fn setup_touchboard_service(force: Option<bool>) -> Result<String, String> {
 
     // 2. Extract embedded scripts into permanent config directory
     let main_py_path = scripts_dir.join("main.py");
+    let launch_sh_path = scripts_dir.join("launch.sh");
     let install_sh_path = scripts_dir.join("install_service.sh");
     let uninstall_sh_path = scripts_dir.join("uninstall_service.sh");
     let config_json_path = config_dir.join("config.json");
 
     std::fs::write(&main_py_path, SCRIPT_MAIN_PY)
         .map_err(|e| format!("Failed to write main.py: {}", e))?;
+
+    std::fs::write(&launch_sh_path, SCRIPT_LAUNCH_SH)
+        .map_err(|e| format!("Failed to write launch.sh: {}", e))?;
 
     std::fs::write(&install_sh_path, SCRIPT_INSTALL_SH)
         .map_err(|e| format!("Failed to write install_service.sh: {}", e))?;
@@ -156,7 +161,7 @@ fn setup_touchboard_service(force: Option<bool>) -> Result<String, String> {
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;
-        for script_file in [&install_sh_path, &uninstall_sh_path] {
+        for script_file in [&install_sh_path, &uninstall_sh_path, &launch_sh_path] {
             if let Ok(metadata) = std::fs::metadata(script_file) {
                 let mut perms = metadata.permissions();
                 perms.set_mode(0o755);
